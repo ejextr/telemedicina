@@ -183,12 +183,17 @@ def accept_waiting(id):
         return jsonify({'error': 'Not a doctor'}), 403
     waiting = WaitingRoom.query.get(id)
     if waiting and waiting.doctor_id == current_user.id:
-        waiting.status = 'in_room'
-        db.session.commit()
-        # Send initial message
-        message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content='Bienvenido a la sala virtual. ¿En qué puedo ayudarte?')
-        db.session.add(message)
-        db.session.commit()
+        try:
+            waiting.status = 'in_room'
+            db.session.commit()
+            # Send initial message
+            message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content='Bienvenido a la sala virtual. ¿En qué puedo ayudarte?')
+            db.session.add(message)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash('Error al aceptar la solicitud.', 'error')
+            return redirect(url_for('waiting_requests'))
     return redirect(url_for('waiting_requests'))
 @app.route('/reject_waiting/<int:id>', methods=['POST'])
 @login_required

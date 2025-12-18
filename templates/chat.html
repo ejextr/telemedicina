@@ -119,6 +119,16 @@
     <div class="chat-container">
         <div class="messages" id="messages">
             {% for message in messages %}
+            <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+                {{ message.content }}
+            </div>
+            {% endfor %}
+        </div>
+        <form class="message-form" action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST">
+            <input type="text" name="content" placeholder="Escribe un mensaje..." required>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
@@ -126,7 +136,7 @@
         // Auto-scroll to bottom
         const messagesDiv = document.getElementById('messages');
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    </script>% endfor %}
+    </script>
         </div>
         <form class="message-form" action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST">
             <input type="text" name="content" placeholder="Escribe un mensaje..." required>
