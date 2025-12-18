@@ -239,7 +239,8 @@ def chat(user_id):
         ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
         ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
     ).order_by(Message.timestamp).all()
-    return render_template('chat.html', other_user=other_user, messages=messages)
+    room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
+    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name)
 
 @app.route('/send_message/<int:user_id>', methods=['POST'])
 @login_required

@@ -84,10 +84,15 @@
             <input type="text" name="content" placeholder="Escribe un mensaje..." required>
             <button type="submit">Enviar</button>
         </form>
+        <button onclick="startVideoCall()" style="margin-top: 10px; width: 100%; padding: 10px; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Iniciar Videollamada</button>
     </div>
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
+        }
+        function startVideoCall() {
+            const roomUrl = `https://meet.jit.si/{{ room_name }}`;
+            window.open(roomUrl, '_blank');
         }
         // Auto-scroll to bottom
         const messagesDiv = document.getElementById('messages');
