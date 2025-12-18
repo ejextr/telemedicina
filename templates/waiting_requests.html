@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitudes de Sala de Espera - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .request-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: var(--shadow);
+        }
+        .request-card h3 {
+            color: var(--primary);
+        }
+        .buttons {
+            margin-top: 10px;
+        }
+        .accept-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .reject-button {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Medic-App - Solicitudes de Sala de Espera</h1>
+    </div>
+    <div style="padding: 20px;">
+        {% for request in requests %}
+        <div class="request-card">
+            <h3>Paciente: {{ request.patient.name }}</h3>
+            <p>Síntomas: {{ request.symptoms }}</p>
+            <div class="buttons">
+                <form action="{{ url_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="accept-button">Aceptar</button>
+                </form>
+                <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="reject-button">Rechazar</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        {% if not requests %}
+        <p>No hay solicitudes pendientes.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

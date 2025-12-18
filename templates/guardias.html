@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardias - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .doctor-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: var(--shadow);
+        }
+        .doctor-card h3 {
+            color: var(--primary);
+        }
+        .enter-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: var(--card);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover {
+            color: black;
+            cursor: pointer;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Medic-App - Guardias</h1>
+    </div>
+    <div style="padding: 20px;">
+        {% for doctor in doctors %}
+        <div class="doctor-card">
+            <h3>{{ doctor.username }}</h3>
+            <p>Especialidad: {{ doctor.specialty or 'General' }}</p>
+            <button class="enter-button" onclick="openModal({{ doctor.id }}, '{{ doctor.username }}')">Entrar a Sala de Espera</button>
+        </div>
+        {% endfor %}
+    </div>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Entrar a Sala de Espera</h2>
+            <p>Doctor: <span id="doctorName"></span></p>
+            <form id="waitingForm">
+                <label for="symptoms">Síntomas:</label><br>
+                <textarea id="symptoms" name="symptoms" required></textarea><br><br>
+                <button type="submit">Enviar Solicitud</button>
+            </form>
+            <div id="response"></div>
+        </div>
+    </div>
+    <script>
+        let currentDoctorId;
+        function openModal(doctorId, doctorName) {
+            currentDoctorId = doctorId;
+            document.getElementById('doctorName').textContent = doctorName;
+            document.getElementById('modal').style.display = 'block';
+        }
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('response').innerHTML = '';
+        }
+        document.getElementById('waitingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const symptoms = document.getElementById('symptoms').value;
+            const response = await fetch(`/enter_waiting_room/${currentDoctorId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ symptoms })
+            });
+            const data = await response.json();
+            document.getElementById('response').innerHTML = `<p>${data.message}</p>`;
+            if (response.ok) {
+                setTimeout(() => closeModal(), 2000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -39,6 +39,15 @@ class Appointment(db.Model):
     patient = db.relationship('Patient', backref=db.backref('appointments', lazy=True))
     doctor = db.relationship('User', backref=db.backref('appointments', lazy=True))
 
+class WaitingRoom(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symptoms = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected
+    patient = db.relationship('Patient', backref=db.backref('waiting_rooms', lazy=True))
+    doctor = db.relationship('User', backref=db.backref('waiting_rooms', lazy=True))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -127,6 +136,58 @@ def toggle_shift():
     current_user.on_shift = not current_user.on_shift
     db.session.commit()
     return jsonify({'on_shift': current_user.on_shift})
+
+@app.route('/guardias')
+@login_required
+def guardias():
+    if current_user.role != 'patient':
+        return redirect(url_for('dashboard'))
+    doctors_on_shift = User.query.filter_by(role='doctor', on_shift=True).all()
+    return render_template('guardias.html', doctors=doctors_on_shift)
+
+@app.route('/enter_waiting_room/<int:doctor_id>', methods=['POST'])
+@login_required
+def enter_waiting_room(doctor_id):
+    if current_user.role != 'patient':
+        return jsonify({'error': 'Not a patient'}), 403
+    symptoms = request.form.get('symptoms')
+    if not symptoms:
+        return jsonify({'error': 'Symptoms required'}), 400
+    waiting = WaitingRoom(patient_id=current_user.id, doctor_id=doctor_id, symptoms=symptoms)
+    db.session.add(waiting)
+    db.session.commit()
+    doctor = User.query.get(doctor_id)
+    return jsonify({'message': f'Se ha solicitado entrar a la sala de espera del doctor {doctor.username}'})
+
+@app.route('/waiting_requests')
+@login_required
+def waiting_requests():
+    if current_user.role != 'doctor':
+        return redirect(url_for('dashboard'))
+    requests = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='pending').all()
+    return render_template('waiting_requests.html', requests=requests)
+
+@app.route('/accept_waiting/<int:id>', methods=['POST'])
+@login_required
+def accept_waiting(id):
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    waiting = WaitingRoom.query.get(id)
+    if waiting and waiting.doctor_id == current_user.id:
+        waiting.status = 'accepted'
+        db.session.commit()
+    return redirect(url_for('waiting_requests'))
+
+@app.route('/reject_waiting/<int:id>', methods=['POST'])
+@login_required
+def reject_waiting(id):
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    waiting = WaitingRoom.query.get(id)
+    if waiting and waiting.doctor_id == current_user.id:
+        waiting.status = 'rejected'
+        db.session.commit()
+    return redirect(url_for('waiting_requests'))
 
 @app.route('/api/appointments', methods=['GET'])
 @login_required
