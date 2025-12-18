@@ -43,52 +43,7 @@
         .dashboard-button:hover {
             background-color: #f0f0f0;
         }
-        .hamburger {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background-color: #00bcd4;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            z-index: 1000;
-        }
-        .menu {
-            position: fixed;
-            top: 0;
-            left: -250px;
-            width: 250px;
-            height: 100%;
-            background-color: white;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
-            transition: left 0.3s;
-            z-index: 999;
-            padding-top: 60px;
-        }
-        .menu.open {
-            left: 0;
-        }
-        .menu ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .menu li {
-            padding: 15px 20px;
-            border-bottom: 1px solid #eee;
-        }
-        .menu a {
-            text-decoration: none;
-            color: #333;
-            display: block;
-        }
-        .menu .logout {
-            position: absolute;
-            bottom: 20px;
-            width: calc(100% - 40px);
-        }
+
         .floating-button {
             position: fixed;
             bottom: 20px;
@@ -144,9 +99,13 @@
     <div class="menu" id="menu">
         <ul>
             <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('patients') }}">Pacientes</a></li>
-            <li><a href="{{ url_for('appointments') }}">Turnos</a></li>
-            <!-- Add more links as needed -->
+            {% if current_user.role == 'patient' %}
+            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            {% endif %}
+            {% if current_user.role == 'doctor' %}
+            <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>

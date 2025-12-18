@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            {% if current_user.role == 'patient' %}
+            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            {% endif %}
+            {% if current_user.role == 'doctor' %}
+            <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+    </div>
     <div class="header">
         <h1>Medic-App - Mensajes</h1>
     </div>
@@ -26,5 +40,10 @@
             <p>Accede a tus mensajes desde el dashboard cuando estés en sala virtual.</p>
         {% endif %}
     </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+    </script>
 </body>
 </html>
