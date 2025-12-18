@@ -6,13 +6,70 @@
     <title>Chat - MedicApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <style>
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .menu {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background-color: var(--card);
+            box-shadow: var(--shadow);
+            transition: left 0.3s;
+            z-index: 999;
+            padding-top: 60px;
+        }
+        .menu.open {
+            left: 0;
+        }
+        .menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .menu a {
+            text-decoration: none;
+            color: var(--text);
+            display: block;
+        }
+        .menu .logout {
+            position: absolute;
+            bottom: 20px;
+            width: calc(100% - 40px);
+        }
         .chat-container {
             max-width: 600px;
             margin: 20px auto;
             padding: 20px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background-color: var(--card);
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            {% if current_user.role == 'patient' %}
+            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+    </div>
+    <div class="header">
+        <h1>Chat con {{ other_user.username }}</h1>
+    </div>  background-color: var(--card);
         }
         .messages {
             height: 300px;
@@ -62,11 +119,14 @@
     <div class="chat-container">
         <div class="messages" id="messages">
             {% for message in messages %}
-            <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
-                <strong>{{ message.sender.username }}:</strong> {{ message.content }}
-                <small>{{ message.timestamp.strftime('%H:%M') }}</small>
-            </div>
-            {% endfor %}
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+        // Auto-scroll to bottom
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    </script>% endfor %}
         </div>
         <form class="message-form" action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST">
             <input type="text" name="content" placeholder="Escribe un mensaje..." required>
