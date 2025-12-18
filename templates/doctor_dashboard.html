@@ -84,6 +84,7 @@
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
@@ -114,6 +115,11 @@
             <h2>Historial</h2>
             <p>Revisa el historial de consultas.</p>
             <a href="#">Próximamente</a>
+        </div>
+        <div class="card">
+            <h2>Mi Perfil</h2>
+            <p>Edita tu información personal y profesional.</p>
+            <a href="{{ url_for('profile') }}">Editar Perfil</a>
         </div>
     </div>
     <script>

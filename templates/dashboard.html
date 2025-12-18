@@ -106,6 +106,7 @@
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
@@ -118,7 +119,7 @@
         <a href="#" class="dashboard-button">Salas de Espera</a>
         <a href="#" class="dashboard-button">Historial</a>
         <a href="{{ url_for('messages') }}" class="dashboard-button">Mensajes</a>
-        <a href="#" class="dashboard-button">Mi Perfil</a>
+        <a href="{{ url_for('profile') }}" class="dashboard-button">Mi Perfil</a>
     </div>
     <div style="margin: 20px; padding: 20px; background-color: #f0f8ff; border: 1px solid #00bcd4; border-radius: 8px;">
         <h3>Mis Salas de Espera</h3>
