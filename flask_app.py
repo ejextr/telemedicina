@@ -19,7 +19,8 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
+    role = db.Column(db.String(50), nullable=False)  # 'doctor' or 'patient'
+    specialty = db.Column(db.String(100), nullable=True)  # Only for doctors
 
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,12 +53,13 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        role = request.form.get('role', 'user')
+        role = request.form.get('role')
+        specialty = request.form.get('specialty') if role == 'doctor' else None
         if User.query.filter_by(username=username).first():
             flash('Username already exists')
             return redirect(url_for('register'))
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, password=hashed_password, role=role)
+        new_user = User(username=username, password=hashed_password, role=role, specialty=specialty)
         db.session.add(new_user)
         db.session.commit()
         flash('Registration successful, please login')
