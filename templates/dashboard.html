@@ -5,17 +5,175 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - MedicApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            color: #00bcd4;
+            margin: 0;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .dashboard-button {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .dashboard-button:hover {
+            background-color: #f0f0f0;
+        }
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #00bcd4;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .menu {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background-color: white;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            transition: left 0.3s;
+            z-index: 999;
+            padding-top: 60px;
+        }
+        .menu.open {
+            left: 0;
+        }
+        .menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .menu a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+        .menu .logout {
+            position: absolute;
+            bottom: 20px;
+            width: calc(100% - 40px);
+        }
+        .floating-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #00bcd4;
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 1000;
+        }
+        .floating-menu {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 999;
+        }
+        .floating-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+        }
+        .floating-menu button:hover {
+            background-color: #f0f0f0;
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 15px;
+            }
+            .dashboard-button {
+                padding: 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Dashboard</h1>
-        <nav>
-            <a href="{{ url_for('patients') }}">Patients</a>
-            <a href="{{ url_for('appointments') }}">Appointments</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-        </nav>
-        <p>Welcome, {{ current_user.username }}!</p>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('patients') }}">Pacientes</a></li>
+            <li><a href="{{ url_for('appointments') }}">Turnos</a></li>
+            <!-- Add more links as needed -->
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <div class="header">
+        <h1>Medic-App</h1>
+    </div>
+    <div class="dashboard-grid">
+        <a href="#" class="dashboard-button">Guardias</a>
+        <a href="{{ url_for('appointments') }}" class="dashboard-button">Turnos</a>
+        <a href="#" class="dashboard-button">Salas de Espera</a>
+        <a href="#" class="dashboard-button">Historial</a>
+        <a href="#" class="dashboard-button">Mensajes</a>
+        <a href="#" class="dashboard-button">Mi Perfil</a>
+    </div>
+    <button class="floating-button" onclick="toggleFloatingMenu()">+</button>
+    <div class="floating-menu" id="floatingMenu">
+        <button onclick="alert('Chat con DocAI próximamente')">Chat con DocAI</button>
+        <button onclick="toggleFloatingMenu()">Cerrar Menú</button>
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+        function toggleFloatingMenu() {
+            const menu = document.getElementById('floatingMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
 </body>
 </html>
