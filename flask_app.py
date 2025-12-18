@@ -44,9 +44,18 @@ class WaitingRoom(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
     doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     symptoms = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected
+    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, in_room
     patient = db.relationship('Patient', backref=db.backref('waiting_rooms', lazy=True))
     doctor = db.relationship('User', backref=db.backref('waiting_rooms', lazy=True))
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy=True))
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_messages', lazy=True))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -174,16 +183,65 @@ def accept_waiting(id):
         return jsonify({'error': 'Not a doctor'}), 403
     waiting = WaitingRoom.query.get(id)
     if waiting and waiting.doctor_id == current_user.id:
-        waiting.status = 'accepted'
+        waiting.status = 'in_room'
         db.session.commit()
-    return redirect(url_for('waiting_requests'))
-
+        # Send initial message
+        message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content='Bienvenido a la sala virtual. ¿En qué puedo ayudarte?')
 @app.route('/reject_waiting/<int:id>', methods=['POST'])
 @login_required
 def reject_waiting(id):
     if current_user.role != 'doctor':
         return jsonify({'error': 'Not a doctor'}), 403
     waiting = WaitingRoom.query.get(id)
+    if waiting and waiting.doctor_id == current_user.id:
+        waiting.status = 'rejected'
+        db.session.commit()
+    return redirect(url_for('waiting_requests'))
+
+@app.route('/messages')
+@login_required
+def messages():
+    if current_user.role == 'patient':
+        # Find if patient has in_room with a doctor
+        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, status='in_room').first()
+        if waiting:
+            return redirect(url_for('chat', user_id=waiting.doctor_id))
+    elif current_user.role == 'doctor':
+        # Show list of patients in room
+        waitings = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='in_room').all()
+        return render_template('messages.html', waitings=waitings)
+    return render_template('messages.html', waitings=[])
+
+@app.route('/chat/<int:user_id>')
+@login_required
+def chat(user_id):
+    other_user = User.query.get(user_id)
+    if not other_user:
+        return redirect(url_for('messages'))
+    # Check if allowed to chat
+    if current_user.role == 'patient':
+        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, doctor_id=user_id, status='in_room').first()
+        if not waiting:
+            return redirect(url_for('messages'))
+    elif current_user.role == 'doctor':
+        waiting = WaitingRoom.query.filter_by(doctor_id=current_user.id, patient_id=user_id, status='in_room').first()
+        if not waiting:
+            return redirect(url_for('messages'))
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
+        ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
+    ).order_by(Message.timestamp).all()
+    return render_template('chat.html', other_user=other_user, messages=messages)
+
+@app.route('/send_message/<int:user_id>', methods=['POST'])
+@login_required
+def send_message(user_id):
+    content = request.form.get('content')
+    if content:
+        message = Message(sender_id=current_user.id, receiver_id=user_id, content=content)
+        db.session.add(message)
+        db.session.commit()
+    return redirect(url_for('chat', user_id=user_id))
     if waiting and waiting.doctor_id == current_user.id:
         waiting.status = 'rejected'
         db.session.commit()

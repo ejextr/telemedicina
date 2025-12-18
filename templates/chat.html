@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--card);
+        }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .message.sent {
+            background-color: var(--primary);
+            color: white;
+            text-align: right;
+        }
+        .message.received {
+            background-color: #e0e0e0;
+            text-align: left;
+        }
+        .message-form {
+            display: flex;
+        }
+        .message-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .message-form button {
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chat con {{ other_user.username }}</h1>
+    </div>
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            {% for message in messages %}
+            <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
+                <strong>{{ message.sender.username }}:</strong> {{ message.content }}
+                <small>{{ message.timestamp.strftime('%H:%M') }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        <form class="message-form" action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST">
+            <input type="text" name="content" placeholder="Escribe un mensaje..." required>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+    <script>
+        // Auto-scroll to bottom
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    </script>
+</body>
+</html>

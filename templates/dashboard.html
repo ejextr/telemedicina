@@ -158,9 +158,22 @@
         <a href="{{ url_for('appointments') }}" class="dashboard-button">Turnos</a>
         <a href="#" class="dashboard-button">Salas de Espera</a>
         <a href="#" class="dashboard-button">Historial</a>
-        <a href="#" class="dashboard-button">Mensajes</a>
+        <a href="{{ url_for('messages') }}" class="dashboard-button">Mensajes</a>
         <a href="#" class="dashboard-button">Mi Perfil</a>
     </div>
+    {% set waiting = namespace(found=None) %}
+    {% for w in current_user.waiting_rooms %}
+        {% if w.status == 'in_room' %}
+            {% set waiting.found = w %}
+        {% endif %}
+    {% endfor %}
+    {% if waiting.found %}
+    <div style="text-align: center; margin: 20px; padding: 20px; background-color: #e8f5e8; border: 1px solid #4CAF50; border-radius: 8px;">
+        <h3>¡Estás en sala de espera!</h3>
+        <p>El doctor {{ waiting.found.doctor.username }} te hará pasar pronto a la sala virtual.</p>
+        <a href="{{ url_for('chat', user_id=waiting.found.doctor_id) }}">Ir al Chat</a>
+    </div>
+    {% endif %}
     <button class="floating-button" onclick="toggleFloatingMenu()">+</button>
     <div class="floating-menu" id="floatingMenu">
         <button onclick="alert('Chat con DocAI próximamente')">Chat con DocAI</button>

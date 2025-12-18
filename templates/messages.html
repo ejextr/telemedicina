@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajes - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="header">
+        <h1>Medic-App - Mensajes</h1>
+    </div>
+    <div style="padding: 20px;">
+        {% if current_user.role == 'doctor' %}
+            <h2>Pacientes en Sala Virtual</h2>
+            {% for waiting in waitings %}
+            <div style="margin: 10px 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                <p>Paciente: {{ waiting.patient.name }}</p>
+                <a href="{{ url_for('chat', user_id=waiting.patient_id) }}">Chatear</a>
+            </div>
+            {% endfor %}
+            {% if not waitings %}
+            <p>No hay pacientes en sala virtual.</p>
+            {% endif %}
+        {% elif current_user.role == 'patient' %}
+            <p>Accede a tus mensajes desde el dashboard cuando estés en sala virtual.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
