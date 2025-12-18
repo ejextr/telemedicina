@@ -173,7 +173,7 @@ def enter_waiting_room(doctor_id):
 def waiting_requests():
     if current_user.role != 'doctor':
         return redirect(url_for('dashboard'))
-    requests = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='pending').all()
+    requests = WaitingRoom.query.filter_by(doctor_id=current_user.id).order_by(WaitingRoom.id.desc()).all()
     return render_template('waiting_requests.html', requests=requests)
 
 @app.route('/accept_waiting/<int:id>', methods=['POST'])

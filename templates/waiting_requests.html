@@ -48,6 +48,9 @@
         <div class="request-card">
             <h3>Paciente: {{ request.patient.name }}</h3>
             <p>Síntomas: {{ request.symptoms }}</p>
+            <p>Estado: 
+                {% if request.status == 'pending' %}Pendiente{% elif request.status == 'accepted' %}Aceptado{% elif request.status == 'rejected' %}Rechazado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}
+            </p>
             <div class="buttons">
                 {% if request.status == 'pending' %}
                 <form action="{{ url_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
@@ -56,7 +59,7 @@
                 <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
                     <button type="submit" class="reject-button">Rechazar</button>
                 </form>
-                {% else %}
+                {% elif request.status == 'in_room' %}
                 <a href="{{ url_for('chat', user_id=request.patient_id) }}" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
                 <button onclick="alert('La función de llamadas se está desarrollando.')" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Llamada</button>
                 {% endif %}
@@ -64,7 +67,7 @@
         </div>
         {% endfor %}
         {% if not requests %}
-        <p>No hay solicitudes pendientes.</p>
+        <p>No hay solicitudes.</p>
         {% endif %}
     </div>
 </body>
