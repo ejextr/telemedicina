@@ -12,11 +12,25 @@ with app.app_context():
 
     db.create_all()
 
-    # Crear usuario admin por defecto
+    # Crear usuarios por defecto
     from flask_app import User
-    hashed_password = generate_password_hash('admin', method='pbkdf2:sha256')
-    admin_user = User(username='admin', password=hashed_password, role='doctor', specialty='General', on_shift=False)
-    db.session.add(admin_user)
+    users = [
+        {'username': 'admin', 'password': 'admin', 'role': 'doctor', 'specialty': 'General', 'on_shift': False},
+        {'username': 'doc', 'password': 'doc', 'role': 'doctor', 'specialty': 'Cardiología', 'on_shift': True},
+        {'username': 'paciente', 'password': 'paciente', 'role': 'patient', 'specialty': None, 'on_shift': False}
+    ]
+    for user_data in users:
+        hashed_password = generate_password_hash(user_data['password'], method='pbkdf2:sha256')
+        user = User(
+            username=user_data['username'],
+            password=hashed_password,
+            role=user_data['role'],
+            specialty=user_data['specialty'],
+            on_shift=user_data['on_shift']
+        )
+        db.session.add(user)
     db.session.commit()
-    print("Admin user created: username='admin', password='admin'")
+    print("Default users created:")
+    for u in users:
+        print(f"  - {u['username']} (password: {u['password']}, role: {u['role']})")
     print("Database initialized")
