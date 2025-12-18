@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import func
 import os
 
 app = Flask(__name__)
@@ -161,8 +162,12 @@ def toggle_shift():
 def guardias():
     if current_user.role != 'patient':
         return redirect(url_for('dashboard'))
-    doctors_on_shift = User.query.filter_by(role='doctor', on_shift=True).all()
-    return render_template('guardias.html', doctors=doctors_on_shift)
+    doctors = []
+    for doctor in User.query.filter_by(role='doctor', on_shift=True):
+        avg_rating = db.session.query(func.avg(Feedback.rating)).filter(Feedback.to_user_id == doctor.id).scalar() or 0
+        doctor.avg_rating = round(avg_rating, 1) if avg_rating else 0
+        doctors.append(doctor)
+    return render_template('guardias.html', doctors=doctors)
 
 @app.route('/enter_waiting_room/<int:doctor_id>', methods=['POST'])
 @login_required
@@ -250,7 +255,8 @@ def chat(user_id):
         ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
     ).order_by(Message.timestamp).all()
     room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
-    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name)
+    recent_call = any(m.content.startswith("Videollamada") and (datetime.utcnow() - m.timestamp) < timedelta(hours=1) for m in messages)
+    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call)
 
 @app.route('/send_message/<int:user_id>', methods=['POST'])
 @login_required

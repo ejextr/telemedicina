@@ -91,6 +91,7 @@
         <div class="doctor-card">
             <h3>{{ doctor.username }}</h3>
             <p>Especialidad: {{ doctor.specialty or 'General' }}</p>
+            <p>Calificación: {% for i in range(5) %}{% if i < doctor.avg_rating %}★{% else %}☆{% endif %}{% endfor %} ({{ doctor.avg_rating }})</p>
             <button class="enter-button" onclick="openModal({{ doctor.id }}, '{{ doctor.username }}')">Entrar a Sala de Espera</button>
         </div>
         {% endfor %}
