@@ -262,6 +262,19 @@ def send_message(user_id):
         db.session.commit()
     return redirect(url_for('chat', user_id=user_id))
 
+@app.route('/start_video_call/<int:user_id>', methods=['POST'])
+@login_required
+def start_video_call(user_id):
+    if current_user.role != 'doctor':
+        return redirect(url_for('dashboard'))
+    room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
+    message_content = f"Videollamada iniciada. Unirse: https://meet.jit.si/{room_name}"
+    message = Message(sender_id=current_user.id, receiver_id=user_id, content=message_content)
+    db.session.add(message)
+    db.session.commit()
+    # Redirect to the room for the doctor
+    return redirect(f"https://meet.jit.si/{room_name}")
+
 @app.route('/submit_feedback/<int:to_user_id>', methods=['POST'])
 @login_required
 def submit_feedback(to_user_id):

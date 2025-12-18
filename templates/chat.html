@@ -89,7 +89,9 @@
             <button type="submit">Enviar</button>
         </form>
         {% if current_user.role == 'doctor' %}
-        <button onclick="startVideoCall()" style="margin-top: 10px; width: 100%; padding: 10px; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Iniciar Videollamada</button>
+        <form action="{{ url_for('start_video_call', user_id=other_user.id) }}" method="POST" style="margin-top: 10px;">
+            <button type="submit" style="width: 100%; padding: 10px; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Iniciar Videollamada</button>
+        </form>
         {% endif %}
         <details style="margin-top: 10px;">
             <summary>Enviar Feedback</summary>
@@ -112,23 +114,7 @@
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
-        async function startVideoCall() {
-            const roomUrl = `https://meet.jit.si/{{ room_name }}`;
-            const messageContent = `Videollamada iniciada. Unirse: ${roomUrl}`;
-            try {
-                await fetch(`{{ url_for('send_message', user_id=other_user.id) }}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `content=${encodeURIComponent(messageContent)}`
-                });
-                // Reload messages or add to DOM, but for simplicity, open window
-                window.open(roomUrl, '_blank');
-            } catch (error) {
-                alert('Error al enviar mensaje.');
-            }
-        }
+
         // Auto-scroll to bottom
         const messagesDiv = document.getElementById('messages');
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
