@@ -21,6 +21,8 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(50), nullable=False)  # 'doctor' or 'patient'
+    name = db.Column(db.String(150), nullable=True)
+    description = db.Column(db.Text, nullable=True)
     specialty = db.Column(db.String(100), nullable=True)  # Only for doctors
     on_shift = db.Column(db.Boolean, default=False)  # For doctors
 
@@ -83,13 +85,15 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        name = request.form.get('name')
+        description = request.form.get('description')
         role = request.form.get('role')
         specialty = request.form.get('specialty') if role == 'doctor' else None
         if User.query.filter_by(username=username).first():
             flash('Username already exists')
             return redirect(url_for('register'))
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, password=hashed_password, role=role, specialty=specialty)
+        new_user = User(username=username, password=hashed_password, role=role, name=name, description=description, specialty=specialty)
         db.session.add(new_user)
         db.session.commit()
         flash('Registration successful, please login')
@@ -298,6 +302,22 @@ def submit_feedback(to_user_id):
         waiting.status = 'rejected'
         db.session.commit()
     return redirect(url_for('waiting_requests'))
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        current_user.name = request.form.get('name')
+        current_user.description = request.form.get('description')
+        if current_user.role == 'doctor':
+            current_user.specialty = request.form.get('specialty')
+        new_password = request.form.get('password')
+        if new_password:
+            current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        flash('Perfil actualizado.', 'success')
+        return redirect(url_for('profile'))
+    return render_template('profile.html')
 
 @app.route('/api/appointments', methods=['GET'])
 @login_required

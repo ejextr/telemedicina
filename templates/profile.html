@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .profile-form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .profile-form h2 {
+            color: var(--primary);
+            text-align: center;
+        }
+        .profile-form label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .profile-form input, .profile-form textarea, .profile-form select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .profile-form textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .profile-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .profile-form button:hover {
+            background-color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            {% if current_user.role == 'patient' %}
+            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            {% endif %}
+            {% if current_user.role == 'doctor' %}
+            <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+    </div>
+    <div class="header">
+        <h1>Medic-App - Mi Perfil</h1>
+    </div>
+    <div class="profile-form">
+        <h2>Editar Perfil</h2>
+        <form method="POST">
+            <label for="name">Nombre Completo:</label>
+            <input type="text" id="name" name="name" value="{{ current_user.name or '' }}" required>
+
+            <label for="description">Descripción:</label>
+            <textarea id="description" name="description" placeholder="Breve descripción sobre ti">{{ current_user.description or '' }}</textarea>
+
+            {% if current_user.role == 'doctor' %}
+            <label for="specialty">Especialidad:</label>
+            <input type="text" id="specialty" name="specialty" value="{{ current_user.specialty or '' }}">
+            {% endif %}
+
+            <label for="password">Nueva Contraseña (dejar vacío para no cambiar):</label>
+            <input type="password" id="password" name="password">
+
+            <button type="submit">Guardar Cambios</button>
+        </form>
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

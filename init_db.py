@@ -15,9 +15,9 @@ with app.app_context():
     # Crear usuarios por defecto
     from flask_app import User
     users = [
-        {'username': 'admin', 'password': 'admin', 'role': 'doctor', 'specialty': 'General', 'on_shift': False},
-        {'username': 'doc', 'password': 'doc', 'role': 'doctor', 'specialty': 'Cardiología', 'on_shift': True},
-        {'username': 'paciente', 'password': 'paciente', 'role': 'patient', 'specialty': None, 'on_shift': False}
+        {'username': 'admin', 'password': 'admin', 'role': 'doctor', 'name': 'Admin Doctor', 'description': 'Administrador del sistema médico.', 'specialty': 'General', 'on_shift': False},
+        {'username': 'doc', 'password': 'doc', 'role': 'doctor', 'name': 'Dr. Juan Pérez', 'description': 'Médico cardiólogo con 10 años de experiencia.', 'specialty': 'Cardiología', 'on_shift': True},
+        {'username': 'paciente', 'password': 'paciente', 'role': 'patient', 'name': 'María García', 'description': 'Paciente regular en consultas médicas.', 'specialty': None, 'on_shift': False}
     ]
     for user_data in users:
         hashed_password = generate_password_hash(user_data['password'], method='pbkdf2:sha256')
@@ -25,6 +25,8 @@ with app.app_context():
             username=user_data['username'],
             password=hashed_password,
             role=user_data['role'],
+            name=user_data['name'],
+            description=user_data['description'],
             specialty=user_data['specialty'],
             on_shift=user_data['on_shift']
         )

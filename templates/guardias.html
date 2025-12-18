@@ -80,6 +80,7 @@
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
@@ -89,10 +90,13 @@
     <div style="padding: 20px;">
         {% for doctor in doctors %}
         <div class="doctor-card">
-            <h3>{{ doctor.username }}</h3>
+            <h3>{{ doctor.name or doctor.username }}</h3>
             <p>Especialidad: {{ doctor.specialty or 'General' }}</p>
+            {% if doctor.description %}
+            <p>{{ doctor.description }}</p>
+            {% endif %}
             <p>Calificación: {% for i in range(5) %}{% if i < doctor.avg_rating %}★{% else %}☆{% endif %}{% endfor %} ({{ doctor.avg_rating }})</p>
-            <button class="enter-button" onclick="openModal({{ doctor.id }}, '{{ doctor.username }}')">Entrar a Sala de Espera</button>
+            <button class="enter-button" onclick="openModal({{ doctor.id }}, '{{ doctor.name or doctor.username }}')">Entrar a Sala de Espera</button>
         </div>
         {% endfor %}
     </div>
