@@ -47,6 +47,23 @@ def index():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        role = request.form.get('role', 'user')
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists')
+            return redirect(url_for('register'))
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, password=hashed_password, role=role)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registration successful, please login')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
