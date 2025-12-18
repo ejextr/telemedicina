@@ -187,6 +187,9 @@ def accept_waiting(id):
         db.session.commit()
         # Send initial message
         message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content='Bienvenido a la sala virtual. ¿En qué puedo ayudarte?')
+        db.session.add(message)
+        db.session.commit()
+    return redirect(url_for('waiting_requests'))
 @app.route('/reject_waiting/<int:id>', methods=['POST'])
 @login_required
 def reject_waiting(id):
