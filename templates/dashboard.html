@@ -164,7 +164,7 @@
     <div style="margin: 20px; padding: 20px; background-color: #f0f8ff; border: 1px solid #00bcd4; border-radius: 8px;">
         <h3>Mis Salas de Espera</h3>
         {% set has_waiting = false %}
-        {% for w in current_user.waiting_rooms %}
+        {% for w in current_user.patient_waiting_rooms %}
             {% set has_waiting = true %}
             <div style="margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px;">
                 <p><strong>Doctor:</strong> {{ w.doctor.username }} ({{ w.doctor.specialty }})</p>

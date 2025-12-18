@@ -41,12 +41,12 @@ class Appointment(db.Model):
 
 class WaitingRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     symptoms = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, in_room
-    patient = db.relationship('Patient', backref=db.backref('waiting_rooms', lazy=True))
-    doctor = db.relationship('User', backref=db.backref('waiting_rooms', lazy=True))
+    patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
+    doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
