@@ -21,6 +21,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(50), nullable=False)  # 'doctor' or 'patient'
     specialty = db.Column(db.String(100), nullable=True)  # Only for doctors
+    on_shift = db.Column(db.Boolean, default=False)  # For doctors
 
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -87,6 +88,8 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    if current_user.role == 'doctor':
+        return render_template('doctor_dashboard.html')
     return render_template('dashboard.html')
 
 @app.route('/patients')
@@ -116,11 +119,20 @@ def api_login():
 @login_required
 def api_patients():
     patients = Patient.query.all()
-    return jsonify([{'id': p.id, 'name': p.name, 'age': p.age, 'gender': p.gender, 'medical_history': p.medical_history} for p in patients])
+@app.route('/toggle_shift', methods=['POST'])
+@login_required
+def toggle_shift():
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    current_user.on_shift = not current_user.on_shift
+    db.session.commit()
+    return jsonify({'on_shift': current_user.on_shift})
 
 @app.route('/api/appointments', methods=['GET'])
 @login_required
 def api_appointments():
+    appointments = Appointment.query.all()
+    return jsonify([{'id': a.id, 'patient_name': a.patient.name, 'doctor_name': a.doctor.username, 'date': a.date.isoformat(), 'reason': a.reason} for a in appointments])
     appointments = Appointment.query.all()
     return jsonify([{'id': a.id, 'patient_name': a.patient.name, 'doctor_name': a.doctor.username, 'date': a.date.isoformat(), 'reason': a.reason} for a in appointments])
 

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: var(--bg);
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--card);
+            box-shadow: var(--shadow);
+        }
+        .header h1 {
+            color: var(--primary);
+            margin: 0;
+        }
+        .shift-toggle {
+            text-align: center;
+            margin: 20px;
+        }
+        .shift-toggle button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .shift-toggle button.off {
+            background-color: var(--danger);
+        }
+        .shift-toggle button:hover {
+            opacity: 0.9;
+        }
+        .status {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .doctor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        .card h2 {
+            color: var(--primary);
+        }
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        .menu {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background-color: var(--card);
+            box-shadow: var(--shadow);
+            transition: left 0.3s;
+            z-index: 999;
+            padding-top: 60px;
+        }
+        .menu.open {
+            left: 0;
+        }
+        .menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .menu li {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .menu a {
+            text-decoration: none;
+            color: var(--text);
+            display: block;
+        }
+        .menu .logout {
+            position: absolute;
+            bottom: 20px;
+            width: calc(100% - 40px);
+        }
+        @media (max-width: 768px) {
+            .doctor-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('patients') }}">Pacientes</a></li>
+            <li><a href="{{ url_for('appointments') }}">Turnos</a></li>
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+    </div>
+    <div class="header">
+        <h1>Medic-App - Panel Médico</h1>
+    </div>
+    <div class="shift-toggle">
+        <button id="shiftButton" onclick="toggleShift()">{% if current_user.on_shift %}Apagar Guardia{% else %}Prender Guardia{% endif %}</button>
+        <div class="status" id="status">Estado: {% if current_user.on_shift %}En Guardia{% else %}Fuera de Guardia{% endif %}</div>
+    </div>
+    <div class="doctor-grid">
+        <div class="card">
+            <h2>Mis Turnos</h2>
+            <p>Gestiona tus citas médicas.</p>
+            <a href="{{ url_for('appointments') }}">Ver Turnos</a>
+        </div>
+        <div class="card">
+            <h2>Pacientes</h2>
+            <p>Accede a la información de tus pacientes.</p>
+            <a href="{{ url_for('patients') }}">Ver Pacientes</a>
+        </div>
+        <div class="card">
+            <h2>Historial</h2>
+            <p>Revisa el historial de consultas.</p>
+            <a href="#">Próximamente</a>
+        </div>
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+        async function toggleShift() {
+            const response = await fetch('/toggle_shift', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            const data = await response.json();
+            const button = document.getElementById('shiftButton');
+            const status = document.getElementById('status');
+            if (data.on_shift) {
+                button.textContent = 'Apagar Guardia';
+                button.classList.remove('off');
+                status.textContent = 'Estado: En Guardia';
+            } else {
+                button.textContent = 'Prender Guardia';
+                button.classList.add('off');
+                status.textContent = 'Estado: Fuera de Guardia';
+            }
+        }
+    </script>
+</body>
+</html>
