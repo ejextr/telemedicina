@@ -57,6 +57,16 @@ class Message(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy=True))
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_messages', lazy=True))
 
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    from_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    to_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    comment = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    from_user = db.relationship('User', foreign_keys=[from_user_id], backref=db.backref('given_feedbacks', lazy=True))
+    to_user = db.relationship('User', foreign_keys=[to_user_id], backref=db.backref('received_feedbacks', lazy=True))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -251,6 +261,20 @@ def send_message(user_id):
         db.session.add(message)
         db.session.commit()
     return redirect(url_for('chat', user_id=user_id))
+
+@app.route('/submit_feedback/<int:to_user_id>', methods=['POST'])
+@login_required
+def submit_feedback(to_user_id):
+    rating = request.form.get('rating', type=int)
+    comment = request.form.get('comment')
+    if rating and 1 <= rating <= 5:
+        feedback = Feedback(from_user_id=current_user.id, to_user_id=to_user_id, rating=rating, comment=comment)
+        db.session.add(feedback)
+        db.session.commit()
+        flash('Feedback enviado.', 'success')
+    else:
+        flash('Rating inválido.', 'error')
+    return redirect(url_for('chat', user_id=to_user_id))
     if waiting and waiting.doctor_id == current_user.id:
         waiting.status = 'rejected'
         db.session.commit()

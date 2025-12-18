@@ -75,7 +75,7 @@
                 </form>
                 {% elif request.status == 'in_room' %}
                 <a href="{{ url_for('chat', user_id=request.patient_id) }}" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
-                <button onclick="alert('La función de llamadas se está desarrollando.')" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Llamada</button>
+                <button onclick="startVideoCall({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
                 {% endif %}
             </div>
         </div>
@@ -87,6 +87,11 @@
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
+        }
+        function startVideoCall(patientId) {
+            const roomName = `medicapp-${Math.min({{ current_user.id }}, patientId)}-${Math.max({{ current_user.id }}, patientId)}`;
+            const roomUrl = `https://meet.jit.si/${roomName}`;
+            window.open(roomUrl, '_blank');
         }
     </script>
 </body>

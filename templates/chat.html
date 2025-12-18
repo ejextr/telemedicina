@@ -76,7 +76,11 @@
         <div class="messages" id="messages">
             {% for message in messages %}
             <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
-                {{ message.content }}
+                {% if 'meet.jit.si' in message.content %}
+                    Videollamada iniciada. <a href="https://meet.jit.si/{{ room_name }}" target="_blank">Unirse a la videollamada</a>
+                {% else %}
+                    {{ message.content }}
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -84,15 +88,46 @@
             <input type="text" name="content" placeholder="Escribe un mensaje..." required>
             <button type="submit">Enviar</button>
         </form>
+        {% if current_user.role == 'doctor' %}
         <button onclick="startVideoCall()" style="margin-top: 10px; width: 100%; padding: 10px; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Iniciar Videollamada</button>
+        {% endif %}
+        <details style="margin-top: 10px;">
+            <summary>Enviar Feedback</summary>
+            <form action="{{ url_for('submit_feedback', to_user_id=other_user.id) }}" method="POST" style="margin-top: 10px;">
+                <label>Calificación (1-5):</label>
+                <select name="rating" required>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select><br>
+                <label>Comentario:</label><br>
+                <textarea name="comment" rows="3" style="width: 100%;"></textarea><br>
+                <button type="submit" style="margin-top: 5px; padding: 5px 10px; background-color: var(--primary); color: white; border: none; border-radius: 4px;">Enviar</button>
+            </form>
+        </details>
     </div>
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
-        function startVideoCall() {
+        async function startVideoCall() {
             const roomUrl = `https://meet.jit.si/{{ room_name }}`;
-            window.open(roomUrl, '_blank');
+            const messageContent = `Videollamada iniciada. Unirse: ${roomUrl}`;
+            try {
+                await fetch(`{{ url_for('send_message', user_id=other_user.id) }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `content=${encodeURIComponent(messageContent)}`
+                });
+                // Reload messages or add to DOM, but for simplicity, open window
+                window.open(roomUrl, '_blank');
+            } catch (error) {
+                alert('Error al enviar mensaje.');
+            }
         }
         // Auto-scroll to bottom
         const messagesDiv = document.getElementById('messages');
