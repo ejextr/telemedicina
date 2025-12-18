@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Appointments</h1>
+        <nav>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('patients') }}">Patients</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        <ul id="appointmentsList">
+            {% for appointment in appointments %}
+            <li>{{ appointment.patient.name }} with {{ appointment.doctor.username }} on {{ appointment.date }} - {{ appointment.reason }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
