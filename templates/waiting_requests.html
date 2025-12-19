@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solicitudes de Sala de Espera - MedicApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         .request-card {
             background-color: var(--card);
@@ -79,6 +78,8 @@
                     <p>Estado: {% if request.status == 'accepted' %}Aceptado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}</p>
                     <div class="buttons">
                         <a href="{{ url_for('chat', user_id=request.patient_id) }}" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
+                        <button onclick="moveUp({{ request.id }})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">↑</button>
+                        <button onclick="moveDown({{ request.id }})" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px;">↓</button>
                         {% if request.status == 'in_room' %}
                         <form action="{{ url_for('start_video_call', user_id=request.patient_id) }}" method="POST" style="display:inline;">
                             <button type="submit" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
@@ -91,12 +92,11 @@
             </div>
             <div style="flex: 1;">
                 <h3>Pendientes</h3>
-                <div id="pending-list">
                 {% set counter = 0 %}
                 {% for request in active_requests %}
                 {% if request.status == 'pending' %}
                 {% set counter = counter + 1 %}
-                <div class="request-card" data-id="{{ request.id }}">
+                <div class="request-card">
                     <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
                     <p>Síntomas: {{ request.symptoms }}</p>
                     <p>Estado: Pendiente</p>
@@ -107,13 +107,10 @@
                         <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
                             <button type="submit" class="reject-button">Rechazar</button>
                         </form>
-                        <button onclick="moveUp({{ request.id }})" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px;">↑</button>
-                        <button onclick="moveDown({{ request.id }})" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">↓</button>
                     </div>
                 </div>
                 {% endif %}
                 {% endfor %}
-                </div>
             </div>
         </div>
 

@@ -222,7 +222,10 @@ def accept_waiting(id):
     waiting = WaitingRoom.query.get(id)
     if waiting and waiting.doctor_id == current_user.id:
         try:
-            waiting.status = 'in_room'
+            # Assign queue order for accepted requests
+            max_order = db.session.query(func.max(WaitingRoom.queue_order)).filter_by(doctor_id=current_user.id, WaitingRoom.status.in_(['accepted', 'in_room'])).scalar() or 0
+            waiting.queue_order = max_order + 1
+            waiting.status = 'accepted'
             db.session.commit()
             # Send initial message
             message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content='Bienvenido a la sala virtual. ¿En qué puedo ayudarte?')
@@ -369,9 +372,9 @@ def move_up(id):
     if current_user.role != 'doctor':
         return jsonify({'error': 'Not authorized'}), 403
     waiting = WaitingRoom.query.get(id)
-    if not waiting or waiting.doctor_id != current_user.id or waiting.status != 'pending':
+    if not waiting or waiting.doctor_id != current_user.id or waiting.status not in ['accepted', 'in_room']:
         return jsonify({'error': 'Invalid request'}), 400
-    prev = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'pending', WaitingRoom.queue_order < waiting.queue_order).order_by(WaitingRoom.queue_order.desc()).first()
+    prev = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['accepted', 'in_room']), WaitingRoom.queue_order < waiting.queue_order).order_by(WaitingRoom.queue_order.desc()).first()
     if prev:
         temp = waiting.queue_order
         waiting.queue_order = prev.queue_order
@@ -385,9 +388,9 @@ def move_down(id):
     if current_user.role != 'doctor':
         return jsonify({'error': 'Not authorized'}), 403
     waiting = WaitingRoom.query.get(id)
-    if not waiting or waiting.doctor_id != current_user.id or waiting.status != 'pending':
+    if not waiting or waiting.doctor_id != current_user.id or waiting.status not in ['accepted', 'in_room']:
         return jsonify({'error': 'Invalid request'}), 400
-    next_ = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'pending', WaitingRoom.queue_order > waiting.queue_order).order_by(WaitingRoom.queue_order).first()
+    next_ = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['accepted', 'in_room']), WaitingRoom.queue_order > waiting.queue_order).order_by(WaitingRoom.queue_order).first()
     if next_:
         temp = waiting.queue_order
         waiting.queue_order = next_.queue_order
