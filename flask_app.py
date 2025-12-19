@@ -228,10 +228,6 @@ def accept_waiting(id):
             waiting.queue_order = max_order + 1
             waiting.status = 'accepted'
             db.session.commit()
-            # Send initial message
-            message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content='Bienvenido a la sala virtual. ¿En qué puedo ayudarte?')
-            db.session.add(message)
-            db.session.commit()
         except Exception as e:
             db.session.rollback()
             flash('Error al aceptar la solicitud.', 'error')
