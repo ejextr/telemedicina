@@ -51,6 +51,7 @@ class WaitingRoom(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=True)
     queue_order = db.Column(db.Integer, default=0)  # For ordering pending requests
+    feedback_submitted = db.Column(db.Boolean, default=False)
     patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
@@ -316,25 +317,39 @@ def complete_call(waiting_id):
         waiting.status = 'completed'
         waiting.end_time = datetime.utcnow()
         db.session.commit()
+        return redirect(url_for('feedback_form', waiting_id=waiting_id))
     return '', 204
 
-@app.route('/submit_feedback/<int:to_user_id>', methods=['POST'])
+@app.route('/feedback/<int:waiting_id>')
 @login_required
-def submit_feedback(to_user_id):
+def feedback_form(waiting_id):
+    waiting = WaitingRoom.query.get(waiting_id)
+    if not waiting or waiting.patient_id != current_user.id or waiting.status != 'completed':
+        flash('No tienes permiso para acceder a esta página')
+        return redirect(url_for('dashboard'))
+    if waiting.feedback_submitted:
+        flash('Ya has enviado feedback para esta consulta')
+        return redirect(url_for('dashboard'))
+    return render_template('feedback.html', waiting=waiting)
+
+@app.route('/submit_feedback/<int:waiting_id>', methods=['POST'])
+@login_required
+def submit_feedback(waiting_id):
+    waiting = WaitingRoom.query.get(waiting_id)
+    if not waiting or waiting.patient_id != current_user.id or waiting.status != 'completed' or waiting.feedback_submitted:
+        flash('No puedes enviar feedback')
+        return redirect(url_for('dashboard'))
     rating = request.form.get('rating', type=int)
     comment = request.form.get('comment')
     if rating and 1 <= rating <= 5:
-        feedback = Feedback(from_user_id=current_user.id, to_user_id=to_user_id, rating=rating, comment=comment)
+        feedback = Feedback(from_user_id=current_user.id, to_user_id=waiting.doctor_id, rating=rating, comment=comment)
         db.session.add(feedback)
+        waiting.feedback_submitted = True
         db.session.commit()
-        flash('Feedback enviado.', 'success')
+        flash('Feedback enviado correctamente')
     else:
-        flash('Rating inválido.', 'error')
-    return redirect(url_for('chat', user_id=to_user_id))
-    if waiting and waiting.doctor_id == current_user.id:
-        waiting.status = 'rejected'
-        db.session.commit()
-    return redirect(url_for('waiting_requests'))
+        flash('Rating inválido')
+    return redirect(url_for('dashboard'))
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required

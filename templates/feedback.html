@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Feedback - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .feedback-form {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .rating {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .rating input {
+            display: none;
+        }
+        .rating label {
+            font-size: 30px;
+            color: #ddd;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .rating input:checked ~ label,
+        .rating label:hover,
+        .rating label:hover ~ label {
+            color: #ff9800;
+        }
+        .feedback-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .submit-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Medic-App - Enviar Feedback</h1>
+    </div>
+    <div style="padding: 20px;">
+        <div class="feedback-form">
+            <h2>Feedback para el Dr. {{ waiting.doctor.name or waiting.doctor.username }}</h2>
+            <p>Consulta completada el {{ waiting.end_time.strftime('%d/%m/%Y %H:%M') if waiting.end_time else 'N/A' }}</p>
+            <form action="{{ url_for('submit_feedback', waiting_id=waiting.id) }}" method="POST">
+                <label>Calificación:</label>
+                <div class="rating">
+                    <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
+                    <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+                    <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+                    <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+                    <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+                </div>
+                <label for="comment">Comentario (opcional):</label>
+                <textarea name="comment" id="comment" rows="4" placeholder="Deja tu comentario..."></textarea>
+                <button type="submit" class="submit-btn">Enviar Feedback</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
