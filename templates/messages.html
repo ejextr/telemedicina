@@ -38,7 +38,16 @@
             <p>No hay pacientes en sala virtual.</p>
             {% endif %}
         {% elif current_user.role == 'patient' %}
-            <p>Accede a tus mensajes desde el dashboard cuando estés en sala virtual.</p>
+            <h2>Doctores en Sala Virtual</h2>
+            {% for waiting in waitings %}
+            <div style="margin: 10px 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                <p>Doctor: {{ waiting.doctor.name }}</p>
+                <a href="{{ url_for('chat', user_id=waiting.doctor_id) }}">Chatear</a>
+            </div>
+            {% endfor %}
+            {% if not waitings %}
+            <p>No tienes consultas activas.</p>
+            {% endif %}
         {% endif %}
     </div>
     <script>

@@ -301,6 +301,10 @@ def send_message(user_id):
 def start_video_call(user_id):
     if current_user.role != 'doctor':
         return redirect(url_for('dashboard'))
+    # Update waiting room status to in_room
+    waiting = WaitingRoom.query.filter_by(doctor_id=current_user.id, patient_id=user_id, status='accepted').first()
+    if waiting:
+        waiting.status = 'in_room'
     room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
     message_content = f"Videollamada iniciada. Unirse: https://meet.jit.si/{room_name}"
     message = Message(sender_id=current_user.id, receiver_id=user_id, content=message_content)
