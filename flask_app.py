@@ -363,6 +363,38 @@ def update_queue_order():
     db.session.commit()
     return jsonify({'success': True})
 
+@app.route('/move_up/<int:id>', methods=['POST'])
+@login_required
+def move_up(id):
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not authorized'}), 403
+    waiting = WaitingRoom.query.get(id)
+    if not waiting or waiting.doctor_id != current_user.id or waiting.status != 'pending':
+        return jsonify({'error': 'Invalid request'}), 400
+    prev = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'pending', WaitingRoom.queue_order < waiting.queue_order).order_by(WaitingRoom.queue_order.desc()).first()
+    if prev:
+        temp = waiting.queue_order
+        waiting.queue_order = prev.queue_order
+        prev.queue_order = temp
+        db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/move_down/<int:id>', methods=['POST'])
+@login_required
+def move_down(id):
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not authorized'}), 403
+    waiting = WaitingRoom.query.get(id)
+    if not waiting or waiting.doctor_id != current_user.id or waiting.status != 'pending':
+        return jsonify({'error': 'Invalid request'}), 400
+    next_ = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'pending', WaitingRoom.queue_order > waiting.queue_order).order_by(WaitingRoom.queue_order).first()
+    if next_:
+        temp = waiting.queue_order
+        waiting.queue_order = next_.queue_order
+        next_.queue_order = temp
+        db.session.commit()
+    return jsonify({'success': True})
+
 @app.route('/api/appointments', methods=['GET'])
 @login_required
 def api_appointments():

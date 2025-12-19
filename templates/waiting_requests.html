@@ -107,6 +107,8 @@
                         <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
                             <button type="submit" class="reject-button">Rechazar</button>
                         </form>
+                        <button onclick="moveUp({{ request.id }})" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px;">↑</button>
+                        <button onclick="moveDown({{ request.id }})" style="background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">↓</button>
                     </div>
                 </div>
                 {% endif %}
@@ -138,27 +140,24 @@
             document.getElementById('menu').classList.toggle('open');
         }
 
-        // Initialize sortable for pending requests
-        const pendingList = document.getElementById('pending-list');
-        if (pendingList) {
-            Sortable.create(pendingList, {
-                animation: 150,
-                onEnd: function(evt) {
-                    const items = pendingList.querySelectorAll('.request-card');
-                    const order = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
-                    fetch('/update_queue_order', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ order: order })
-                    }).then(response => response.json()).then(data => {
-                        if (data.success) {
-                            console.log('Order updated');
-                        }
-                    });
-                }
-            });
+        function moveUp(id) {
+            fetch(`/move_up/${id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+
+        function moveDown(id) {
+            fetch(`/move_down/${id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
         }
     </script>
 </body>
