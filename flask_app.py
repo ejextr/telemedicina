@@ -223,7 +223,7 @@ def accept_waiting(id):
     if waiting and waiting.doctor_id == current_user.id:
         try:
             # Assign queue order for accepted requests
-            max_order = db.session.query(func.max(WaitingRoom.queue_order)).filter_by(doctor_id=current_user.id, WaitingRoom.status.in_(['accepted', 'in_room'])).scalar() or 0
+            max_order = db.session.query(func.max(WaitingRoom.queue_order)).filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['accepted', 'in_room'])).scalar() or 0
             waiting.queue_order = max_order + 1
             waiting.status = 'accepted'
             db.session.commit()
