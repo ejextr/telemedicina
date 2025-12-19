@@ -51,38 +51,74 @@
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
     <div class="header">
-        <h1>Medic-App - Solicitudes de Sala de Espera</h1>
+        <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div style="padding: 20px;">
-        {% for request in requests %}
-        <div class="request-card">
-            <h3>Paciente: {{ request.patient.name }}</h3>
-            <p>Síntomas: {{ request.symptoms }}</p>
-            <p>Estado: 
-                {% if request.status == 'pending' %}Pendiente{% elif request.status == 'accepted' %}Aceptado{% elif request.status == 'rejected' %}Rechazado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}
-            </p>
-            <div class="buttons">
-                {% if request.status == 'pending' %}
-                <form action="{{ url_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
-                    <button type="submit" class="accept-button">Aceptar</button>
-                </form>
-                <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
-                    <button type="submit" class="reject-button">Rechazar</button>
-                </form>
-                {% elif request.status == 'in_room' %}
-                <a href="{{ url_for('chat', user_id=request.patient_id) }}" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
-                <button onclick="startVideoCall({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+        <h2>Salas de Espera Activas</h2>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h3>Aceptadas / En Sala</h3>
+                {% set counter = 0 %}
+                {% for request in active_requests %}
+                {% if request.status in ['accepted', 'in_room'] %}
+                {% set counter = counter + 1 %}
+                <div class="request-card">
+                    <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
+                    <p>Síntomas: {{ request.symptoms }}</p>
+                    <p>Estado: {% if request.status == 'accepted' %}Aceptado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}</p>
+                    {% if request.status == 'in_room' %}
+                    <button onclick="startVideoCall({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+                    {% endif %}
+                </div>
                 {% endif %}
+                {% endfor %}
+            </div>
+            <div style="flex: 1;">
+                <h3>Pendientes</h3>
+                {% set counter = 0 %}
+                {% for request in active_requests %}
+                {% if request.status == 'pending' %}
+                {% set counter = counter + 1 %}
+                <div class="request-card">
+                    <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
+                    <p>Síntomas: {{ request.symptoms }}</p>
+                    <p>Estado: Pendiente</p>
+                    <div class="buttons">
+                        <form action="{{ url_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="accept-button">Aceptar</button>
+                        </form>
+                        <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="reject-button">Rechazar</button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
             </div>
         </div>
+
+        <h2>Consultas de Hoy</h2>
+        {% for consultation in today_consultations %}
+        <div class="request-card" style="background-color: #e0f7e0;">
+            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
+            <p>Síntomas: {{ consultation.symptoms }}</p>
+            <p>Finalizada: {{ consultation.end_time.strftime('%H:%M') if consultation.end_time else 'N/A' }}</p>
+        </div>
         {% endfor %}
-        {% if not requests %}
-        <p>No hay solicitudes.</p>
-        {% endif %}
+
+        <h2>Historial de Consultas</h2>
+        {% for consultation in history_consultations %}
+        <div class="request-card" style="background-color: #f0f0f0;">
+            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
+            <p>Síntomas: {{ consultation.symptoms }}</p>
+            <p>Fecha: {{ consultation.end_time.strftime('%d/%m/%Y %H:%M') if consultation.end_time else 'N/A' }}</p>
+        </div>
+        {% endfor %}
     </div>
     <script>
         function toggleMenu() {

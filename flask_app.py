@@ -47,7 +47,9 @@ class WaitingRoom(db.Model):
     patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     doctor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     symptoms = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, in_room
+    status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, in_room, completed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    end_time = db.Column(db.DateTime, nullable=True)
     patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
@@ -192,8 +194,12 @@ def enter_waiting_room(doctor_id):
 def waiting_requests():
     if current_user.role != 'doctor':
         return redirect(url_for('dashboard'))
-    requests = WaitingRoom.query.filter_by(doctor_id=current_user.id).order_by(WaitingRoom.id.desc()).all()
-    return render_template('waiting_requests.html', requests=requests)
+    now = datetime.utcnow()
+    yesterday = now - timedelta(hours=24)
+    active_requests = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['pending', 'accepted', 'in_room'])).order_by(WaitingRoom.created_at).all()
+    today_consultations = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'completed', WaitingRoom.end_time >= yesterday).order_by(WaitingRoom.end_time.desc()).all()
+    history_consultations = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'completed', WaitingRoom.end_time < yesterday).order_by(WaitingRoom.end_time.desc()).all()
+    return render_template('waiting_requests.html', active_requests=active_requests, today_consultations=today_consultations, history_consultations=history_consultations)
 
 @app.route('/accept_waiting/<int:id>', methods=['POST'])
 @login_required
@@ -260,7 +266,8 @@ def chat(user_id):
     ).order_by(Message.timestamp).all()
     room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
     recent_call = any(m.content.startswith("Videollamada") and (datetime.utcnow() - m.timestamp) < timedelta(hours=1) for m in messages)
-    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call)
+    waiting_id = waiting.id if waiting else None
+    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call, waiting_id=waiting_id)
 
 @app.route('/send_message/<int:user_id>', methods=['POST'])
 @login_required
@@ -284,6 +291,16 @@ def start_video_call(user_id):
     db.session.commit()
     # Redirect to the room for the doctor
     return redirect(f"https://meet.jit.si/{room_name}")
+
+@app.route('/complete_call/<int:waiting_id>', methods=['POST'])
+@login_required
+def complete_call(waiting_id):
+    waiting = WaitingRoom.query.get(waiting_id)
+    if waiting and waiting.patient_id == current_user.id and waiting.status == 'in_room':
+        waiting.status = 'completed'
+        waiting.end_time = datetime.utcnow()
+        db.session.commit()
+    return '', 204
 
 @app.route('/submit_feedback/<int:to_user_id>', methods=['POST'])
 @login_required

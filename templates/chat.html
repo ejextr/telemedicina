@@ -66,6 +66,7 @@
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
@@ -77,7 +78,7 @@
             {% for message in messages %}
             <div class="message {{ 'sent' if message.sender_id == current_user.id else 'received' }}">
                 {% if 'meet.jit.si' in message.content %}
-                    Videollamada iniciada. <a href="https://meet.jit.si/{{ room_name }}" target="_blank">Unirse a la videollamada</a>
+                    Videollamada iniciada. <button onclick="joinCall()">Unirse a la videollamada</button>
                 {% else %}
                     {{ message.content }}
                 {% endif %}
@@ -113,6 +114,16 @@
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
+        }
+        async function joinCall() {
+            {% if waiting_id %}
+            await fetch('/complete_call/{{ waiting_id }}', { method: 'POST' });
+            {% endif %}
+            const roomUrl = `https://meet.jit.si/{{ room_name }}`;
+            window.open(roomUrl, '_blank');
+            setTimeout(() => {
+                document.querySelector('details').open = true;
+            }, 30000);
         }
 
         // Auto-scroll to bottom
