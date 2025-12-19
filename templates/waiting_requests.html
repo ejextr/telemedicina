@@ -71,9 +71,12 @@
                     <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
                     <p>Síntomas: {{ request.symptoms }}</p>
                     <p>Estado: {% if request.status == 'accepted' %}Aceptado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}</p>
-                    {% if request.status == 'in_room' %}
-                    <button onclick="startVideoCall({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
-                    {% endif %}
+                    <div class="buttons">
+                        <a href="{{ url_for('chat', user_id=request.patient_id) }}" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
+                        {% if request.status == 'in_room' %}
+                        <button onclick="startVideoCall({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endif %}
                 {% endfor %}
