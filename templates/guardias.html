@@ -18,6 +18,7 @@
             padding: 20px;
             margin: 10px 0;
             box-shadow: var(--shadow);
+            min-height: 180px;
         }
         .doctor-card h3 {
             color: var(--primary);
@@ -100,10 +101,10 @@
         <div class="doctor-card">
             <h3>{{ doctor.name or doctor.username }}</h3>
             <p>Especialidad: {{ doctor.specialty or 'General' }}</p>
+            <p>Calificación: {% for i in range(5) %}{% if i < doctor.avg_rating %}★{% else %}☆{% endif %}{% endfor %} ({{ doctor.avg_rating }})</p>
             {% if doctor.description %}
             <p>{{ doctor.description }}</p>
             {% endif %}
-            <p>Calificación: {% for i in range(5) %}{% if i < doctor.avg_rating %}★{% else %}☆{% endif %}{% endfor %} ({{ doctor.avg_rating }})</p>
             <button class="enter-button" onclick="openModal({{ doctor.id }}, '{{ doctor.name or doctor.username }}')">Entrar a Sala de Espera</button>
         </div>
         {% endfor %}
