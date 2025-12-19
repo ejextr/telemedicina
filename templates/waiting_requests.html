@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Solicitudes de Sala de Espera - MedicApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         .request-card {
             background-color: var(--card);
@@ -74,7 +75,9 @@
                     <div class="buttons">
                         <a href="{{ url_for('chat', user_id=request.patient_id) }}" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
                         {% if request.status == 'in_room' %}
-                        <button onclick="startVideoCall({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+                        <form action="{{ url_for('start_video_call', user_id=request.patient_id) }}" method="POST" style="display:inline;">
+                            <button type="submit" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+                        </form>
                         {% endif %}
                     </div>
                 </div>
@@ -83,11 +86,12 @@
             </div>
             <div style="flex: 1;">
                 <h3>Pendientes</h3>
+                <div id="pending-list">
                 {% set counter = 0 %}
                 {% for request in active_requests %}
                 {% if request.status == 'pending' %}
                 {% set counter = counter + 1 %}
-                <div class="request-card">
+                <div class="request-card" data-id="{{ request.id }}">
                     <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
                     <p>Síntomas: {{ request.symptoms }}</p>
                     <p>Estado: Pendiente</p>
@@ -102,6 +106,7 @@
                 </div>
                 {% endif %}
                 {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -127,10 +132,28 @@
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
-        function startVideoCall(patientId) {
-            const roomName = `medicapp-${Math.min({{ current_user.id }}, patientId)}-${Math.max({{ current_user.id }}, patientId)}`;
-            const roomUrl = `https://meet.jit.si/${roomName}`;
-            window.open(roomUrl, '_blank');
+
+        // Initialize sortable for pending requests
+        const pendingList = document.getElementById('pending-list');
+        if (pendingList) {
+            Sortable.create(pendingList, {
+                animation: 150,
+                onEnd: function(evt) {
+                    const items = pendingList.querySelectorAll('.request-card');
+                    const order = Array.from(items).map(item => parseInt(item.getAttribute('data-id')));
+                    fetch('/update_queue_order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ order: order })
+                    }).then(response => response.json()).then(data => {
+                        if (data.success) {
+                            console.log('Order updated');
+                        }
+                    });
+                }
+            });
         }
     </script>
 </body>

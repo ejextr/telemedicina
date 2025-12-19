@@ -88,6 +88,14 @@
         <h1>Medic-App - Guardias</h1>
     </div>
     <div style="padding: 20px;">
+        {% if current_waiting %}
+        <div class="doctor-card" style="background-color: #fff3cd; border-color: #ffeaa7;">
+            <h3>Estás en la cola de espera</h3>
+            <p>Doctor: {{ current_waiting.doctor.name or current_waiting.doctor.username }}</p>
+            <p>Tu posición en la cola: {{ position }}</p>
+            <p>Síntomas: {{ current_waiting.symptoms }}</p>
+        </div>
+        {% endif %}
         {% for doctor in doctors %}
         <div class="doctor-card">
             <h3>{{ doctor.name or doctor.username }}</h3>

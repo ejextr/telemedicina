@@ -50,6 +50,7 @@ class WaitingRoom(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, in_room, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=True)
+    queue_order = db.Column(db.Integer, default=0)  # For ordering pending requests
     patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
@@ -173,7 +174,17 @@ def guardias():
         avg_rating = db.session.query(func.avg(Feedback.rating)).filter(Feedback.to_user_id == doctor.id).scalar() or 0
         doctor.avg_rating = round(avg_rating, 1) if avg_rating else 0
         doctors.append(doctor)
-    return render_template('guardias.html', doctors=doctors)
+    # Check if patient is in any waiting room
+    current_waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, status='pending').first()
+    position = None
+    if current_waiting:
+        # Count how many pending requests have lower queue_order for the same doctor
+        position = WaitingRoom.query.filter(
+            WaitingRoom.doctor_id == current_waiting.doctor_id,
+            WaitingRoom.status == 'pending',
+            WaitingRoom.queue_order <= current_waiting.queue_order
+        ).count()
+    return render_template('guardias.html', doctors=doctors, current_waiting=current_waiting, position=position)
 
 @app.route('/enter_waiting_room/<int:doctor_id>', methods=['POST'])
 @login_required
@@ -183,7 +194,9 @@ def enter_waiting_room(doctor_id):
     symptoms = request.form.get('symptoms')
     if not symptoms:
         return jsonify({'error': 'Symptoms required'}), 400
-    waiting = WaitingRoom(patient_id=current_user.id, doctor_id=doctor_id, symptoms=symptoms)
+    # Get the next queue order
+    max_order = db.session.query(func.max(WaitingRoom.queue_order)).filter_by(doctor_id=doctor_id, status='pending').scalar() or 0
+    waiting = WaitingRoom(patient_id=current_user.id, doctor_id=doctor_id, symptoms=symptoms, queue_order=max_order + 1)
     db.session.add(waiting)
     db.session.commit()
     doctor = User.query.get(doctor_id)
@@ -196,7 +209,7 @@ def waiting_requests():
         return redirect(url_for('dashboard'))
     now = datetime.utcnow()
     yesterday = now - timedelta(hours=24)
-    active_requests = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['pending', 'accepted', 'in_room'])).order_by(WaitingRoom.created_at).all()
+    active_requests = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['pending', 'accepted', 'in_room'])).order_by(WaitingRoom.queue_order).all()
     today_consultations = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'completed', WaitingRoom.end_time >= yesterday).order_by(WaitingRoom.end_time.desc()).all()
     history_consultations = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'completed', WaitingRoom.end_time < yesterday).order_by(WaitingRoom.end_time.desc()).all()
     return render_template('waiting_requests.html', active_requests=active_requests, today_consultations=today_consultations, history_consultations=history_consultations)
@@ -335,6 +348,20 @@ def profile():
         flash('Perfil actualizado.', 'success')
         return redirect(url_for('profile'))
     return render_template('profile.html')
+
+@app.route('/update_queue_order', methods=['POST'])
+@login_required
+def update_queue_order():
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not authorized'}), 403
+    data = request.get_json()
+    order_ids = data.get('order', [])
+    for index, waiting_id in enumerate(order_ids):
+        waiting = WaitingRoom.query.get(waiting_id)
+        if waiting and waiting.doctor_id == current_user.id and waiting.status == 'pending':
+            waiting.queue_order = index + 1
+    db.session.commit()
+    return jsonify({'success': True})
 
 @app.route('/api/appointments', methods=['GET'])
 @login_required
