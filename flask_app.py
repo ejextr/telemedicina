@@ -413,6 +413,15 @@ def move_down(id):
         db.session.commit()
     return jsonify({'success': True})
 
+@app.route('/migrate_db')
+def migrate_db():
+    try:
+        db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+        db.session.commit()
+        return 'Migration completed'
+    except Exception as e:
+        return f'Error: {e}'
+
 @app.route('/api/appointments', methods=['GET'])
 @login_required
 def api_appointments():
@@ -424,4 +433,10 @@ def api_appointments():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        # Add missing columns if needed
+        try:
+            db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+            db.session.commit()
+        except:
+            pass  # Column already exists
     app.run(debug=True)
