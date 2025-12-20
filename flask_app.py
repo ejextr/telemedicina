@@ -413,6 +413,64 @@ def move_down(id):
         db.session.commit()
     return jsonify({'success': True})
 
+@app.route('/api/queue_position')
+@login_required
+def api_queue_position():
+    if current_user.role != 'patient':
+        return jsonify({'position': None})
+    pending = WaitingRoom.query.filter_by(patient_id=current_user.id, status='pending').order_by(WaitingRoom.queue_order).first()
+    if not pending:
+        return jsonify({'position': None})
+    position = db.session.query(func.count(WaitingRoom.id)).filter(
+        WaitingRoom.doctor_id == pending.doctor_id,
+        WaitingRoom.status == 'pending',
+        WaitingRoom.queue_order < pending.queue_order
+    ).scalar() + 1
+    return jsonify({'position': position})
+
+@app.route('/api/active_consultations')
+@login_required
+def api_active_consultations():
+    if current_user.role == 'doctor':
+        waitings = WaitingRoom.query.filter_by(doctor_id=current_user.id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).order_by(WaitingRoom.queue_order).all()
+    else:
+        waitings = WaitingRoom.query.filter_by(patient_id=current_user.id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).all()
+    data = []
+    for w in waitings:
+        data.append({
+            'id': w.id,
+            'other_user_id': w.patient_id if current_user.role == 'doctor' else w.doctor_id,
+            'status': w.status,
+            'queue_order': w.queue_order if hasattr(w, 'queue_order') else 0
+        })
+    return jsonify(data)
+
+@app.route('/api/waiting_requests')
+@login_required
+def api_waiting_requests():
+    if current_user.role != 'doctor':
+        return jsonify([])
+    pending = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='pending').order_by(WaitingRoom.queue_order).all()
+    accepted = WaitingRoom.query.filter_by(doctor_id=current_user.id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).order_by(WaitingRoom.queue_order).all()
+    return jsonify({
+        'pending': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'symptoms': w.symptoms} for w in pending],
+        'accepted': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'status': w.status} for w in accepted]
+    })
+
+@app.route('/api/chat_messages/<int:user_id>')
+@login_required
+def api_chat_messages(user_id):
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
+        ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
+    ).order_by(Message.timestamp.asc()).all()
+    return jsonify([{
+        'id': m.id,
+        'sender_id': m.sender_id,
+        'content': m.content,
+        'timestamp': m.timestamp.strftime('%H:%M')
+    } for m in messages])
+
 @app.route('/migrate_db')
 def migrate_db():
     try:

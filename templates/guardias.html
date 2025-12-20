@@ -93,7 +93,7 @@
         <div class="doctor-card" style="background-color: #fff3cd; border-color: #ffeaa7;">
             <h3>Estás en la cola de espera</h3>
             <p>Doctor: {{ current_waiting.doctor.name or current_waiting.doctor.username }}</p>
-            <p>Tu posición en la cola: {{ position }}</p>
+            <p id="queue-position">Tu posición en la cola: <span id="pos-num">{{ position or '' }}</span></p>
             <p>Síntomas: {{ current_waiting.symptoms }}</p>
         </div>
         {% endif %}
@@ -154,6 +154,23 @@
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
+
+        function updateQueuePosition() {
+            fetch('/api/queue_position')
+                .then(r => r.json())
+                .then(data => {
+                    const posEl = document.getElementById('pos-num');
+                    const posP = document.getElementById('queue-position');
+                    if (data.position) {
+                        posEl.textContent = data.position;
+                        if (posP) posP.style.display = 'block';
+                    } else {
+                        if (posP) posP.style.display = 'none';
+                    }
+                }).catch(e => console.log('Polling error', e));
+        }
+        setInterval(updateQueuePosition, 5000);
+        updateQueuePosition();
     </script>
 </body>
 </html>
