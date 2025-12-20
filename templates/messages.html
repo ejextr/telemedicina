@@ -66,6 +66,7 @@
         }
 
         let lastUnread = 0;
+        alert('Script loaded on Messages');
         function playNotificationSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
