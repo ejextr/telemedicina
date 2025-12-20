@@ -194,6 +194,7 @@
             fetch('/api/unread_count')
                 .then(r => r.json())
                 .then(data => {
+                    console.log('Unread count:', data.unread);
                     const badge = document.getElementById('unread-badge');
                     if (data.unread > 0) {
                         badge.textContent = data.unread > 99 ? '99+' : data.unread;
@@ -207,7 +208,7 @@
                     lastUnread = data.unread;
                 }).catch(e => console.log('Unread polling error', e));
         }
-        setInterval(updateUnreadBadge, 5000);
+        setInterval(updateUnreadBadge, 3000);
         updateUnreadBadge();
     </script>
 </body>
