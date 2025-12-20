@@ -125,20 +125,52 @@
                 .then(data => {
                     console.log('Unread count:', data.unread);
                     const badge = document.getElementById('unread-badge');
-                    if (data.unread > 0) {
-                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                        badge.style.display = 'inline';
-                        if (data.unread > lastUnread) {
-                            playNotificationSound();
+                    if (badge) {
+                        if (data.unread > 0) {
+                            badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                            badge.style.display = 'inline';
+                            if (data.unread > lastUnread) {
+                                playNotificationSound();
+                                // Check for video call
+                                fetch('/api/latest_unread_message')
+                                    .then(r => r.json())
+                                    .then(msgData => {
+                                        if (msgData.message && msgData.message.content.includes('Videollamada')) {
+                                            showVideoCallModal(msgData.message.sender);
+                                        }
+                                    }).catch(e => console.log('Latest message error', e));
+                            }
+                        } else {
+                            badge.style.display = 'none';
                         }
-                    } else {
-                        badge.style.display = 'none';
                     }
                     lastUnread = data.unread;
                 }).catch(e => console.log('Unread polling error', e));
         }
         setInterval(updateUnreadBadge, 3000);
         updateUnreadBadge();
+    </script>
+    <div id="videoCallModal" class="modal" style="background-color: rgba(0,0,0,0.8);">
+        <div class="modal-content" style="text-align: center; margin-top: 20%;">
+            <h2 style="color: red;">¡Llamada Entrante!</h2>
+            <p>El médico <span id="callerName"></span> te está llamando.</p>
+            <button onclick="joinCall()" style="background-color: #4CAF50; color: white; padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer;">Unirse a la Llamada</button>
+            <br><br>
+            <button onclick="closeVideoCallModal()" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Ignorar</button>
+        </div>
+    </div>
+    <script>
+        function showVideoCallModal(caller) {
+            document.getElementById('callerName').textContent = caller;
+            document.getElementById('videoCallModal').style.display = 'block';
+        }
+        function closeVideoCallModal() {
+            document.getElementById('videoCallModal').style.display = 'none';
+        }
+        function joinCall() {
+            window.location.href = '/messages';
+            closeVideoCallModal();
+        }
     </script>
 </body>
 </html>
