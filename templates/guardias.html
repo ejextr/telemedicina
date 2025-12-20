@@ -23,6 +23,14 @@
         .doctor-card h3 {
             color: var(--primary);
         }
+        .badge {
+            background-color: #f44336;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
         .enter-button {
             background-color: var(--primary);
             color: white;
@@ -80,7 +88,7 @@
             {% if current_user.role == 'doctor' %}
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
-            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('messages') }}">Mensajes<span id="unread-badge" class="badge" style="display:none;"></span></a></li>
             <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
@@ -155,6 +163,39 @@
             document.getElementById('menu').classList.toggle('open');
         }
 
+        let lastUnread = 0;
+        function playNotificationSound() {
+            // Simple beep using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        function updateUnreadBadge() {
+            fetch('/api/unread_count')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('unread-badge');
+                    if (data.unread > 0) {
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                        badge.style.display = 'inline';
+                        if (data.unread > lastUnread) {
+                            playNotificationSound();
+                        }
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    lastUnread = data.unread;
+                }).catch(e => console.log('Unread polling error', e));
+        }
+
         function updateQueuePosition() {
             fetch('/api/queue_position')
                 .then(r => r.json())
@@ -170,7 +211,9 @@
                 }).catch(e => console.log('Polling error', e));
         }
         setInterval(updateQueuePosition, 5000);
+        setInterval(updateUnreadBadge, 5000);
         updateQueuePosition();
+        updateUnreadBadge();
     </script>
 </body>
 </html>

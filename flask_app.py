@@ -61,6 +61,7 @@ class Message(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    read = db.Column(db.Boolean, default=False)
     sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy=True))
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_messages', lazy=True))
 
@@ -464,12 +465,23 @@ def api_chat_messages(user_id):
         ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
         ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
     ).order_by(Message.timestamp.asc()).all()
+    # Mark messages from user_id as read
+    for m in messages:
+        if m.sender_id == user_id and m.receiver_id == current_user.id:
+            m.read = True
+    db.session.commit()
     return jsonify([{
         'id': m.id,
         'sender_id': m.sender_id,
         'content': m.content,
         'timestamp': m.timestamp.strftime('%H:%M')
     } for m in messages])
+
+@app.route('/api/unread_count')
+@login_required
+def api_unread_count():
+    count = Message.query.filter_by(receiver_id=current_user.id, read=False).count()
+    return jsonify({'unread': count})
 
 @app.route('/migrate_db')
 def migrate_db():

@@ -19,6 +19,14 @@
         .request-card:active {
             cursor: grabbing;
         }
+        .badge {
+            background-color: #f44336;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
         .request-card h3 {
             color: var(--primary);
         }
@@ -55,7 +63,7 @@
             {% if current_user.role == 'doctor' %}
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
             {% endif %}
-            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('messages') }}">Mensajes<span id="unread-badge" class="badge" style="display:none;"></span></a></li>
             <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
@@ -156,6 +164,40 @@
                     }
                 });
         }
+
+        let lastUnread = 0;
+        function playNotificationSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        function updateUnreadBadge() {
+            fetch('/api/unread_count')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('unread-badge');
+                    if (data.unread > 0) {
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                        badge.style.display = 'inline';
+                        if (data.unread > lastUnread) {
+                            playNotificationSound();
+                        }
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    lastUnread = data.unread;
+                }).catch(e => console.log('Unread polling error', e));
+        }
+        setInterval(updateUnreadBadge, 5000);
+        updateUnreadBadge();
     </script>
 </body>
 </html>
