@@ -52,6 +52,7 @@ class WaitingRoom(db.Model):
     end_time = db.Column(db.DateTime, nullable=True)
     queue_order = db.Column(db.Integer, default=0)  # For ordering pending requests
     feedback_submitted = db.Column(db.Boolean, default=False)
+    chat_enabled = db.Column(db.Boolean, default=False)
     patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
@@ -245,17 +246,28 @@ def reject_waiting(id):
         db.session.commit()
     return redirect(url_for('waiting_requests'))
 
+@app.route('/enable_chat/<int:id>', methods=['POST'])
+@login_required
+def enable_chat(id):
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    waiting = WaitingRoom.query.get(id)
+    if waiting and waiting.doctor_id == current_user.id:
+        waiting.chat_enabled = True
+        db.session.commit()
+    return redirect(url_for('waiting_requests'))
+
 @app.route('/messages')
 @login_required
 def messages():
     if current_user.role == 'patient':
-        # Find if patient has in_room with a doctor
-        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, status='in_room').first()
+        # Find if patient has chat enabled with a doctor
+        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, chat_enabled=True).first()
         if waiting:
             return redirect(url_for('chat', user_id=waiting.doctor_id))
     elif current_user.role == 'doctor':
-        # Show list of patients in room
-        waitings = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='in_room').all()
+        # Show list of patients with chat enabled
+        waitings = WaitingRoom.query.filter_by(doctor_id=current_user.id, chat_enabled=True).all()
         return render_template('messages.html', waitings=waitings)
     return render_template('messages.html', waitings=[])
 
@@ -267,11 +279,11 @@ def chat(user_id):
         return redirect(url_for('messages'))
     # Check if allowed to chat
     if current_user.role == 'patient':
-        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, doctor_id=user_id, status='in_room').first()
+        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, doctor_id=user_id, chat_enabled=True).first()
         if not waiting:
             return redirect(url_for('messages'))
     elif current_user.role == 'doctor':
-        waiting = WaitingRoom.query.filter_by(doctor_id=current_user.id, patient_id=user_id, status='in_room').first()
+        waiting = WaitingRoom.query.filter_by(doctor_id=current_user.id, patient_id=user_id, chat_enabled=True).first()
         if not waiting:
             return redirect(url_for('messages'))
     messages = Message.query.filter(

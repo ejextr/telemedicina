@@ -85,7 +85,13 @@
                     <p>Síntomas: {{ request.symptoms }}</p>
                     <p>Estado: {% if request.status == 'accepted' %}Aceptado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}</p>
                     <div class="buttons">
+                        {% if request.chat_enabled %}
                         <a href="{{ url_for('chat', user_id=request.patient_id) }}" target="_blank" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
+                        {% else %}
+                        <form action="{{ url_for('enable_chat', id=request.id) }}" method="POST" style="display:inline; margin-right: 10px;">
+                            <button type="submit" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>
+                        </form>
+                        {% endif %}
                         <button onclick="moveUp({{ request.id }})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">↑</button>
                         <button onclick="moveDown({{ request.id }})" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px;">↓</button>
                         {% if request.status in ['accepted', 'in_room'] %}
@@ -115,6 +121,11 @@
                         <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
                             <button type="submit" class="reject-button">Rechazar</button>
                         </form>
+                        {% if not request.chat_enabled %}
+                        <form action="{{ url_for('enable_chat', id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>
+                        </form>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
