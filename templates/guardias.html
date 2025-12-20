@@ -194,7 +194,7 @@
                         badge.style.display = 'none';
                     }
                     lastUnread = data.unread;
-                }).catch(e => console.log('Unread polling error', e));
+                }).catch(e => { console.log('Unread polling error', e); alert('Error en polling de mensajes no leídos: ' + e.message); });
         }
 
         function updateQueuePosition() {
@@ -210,7 +210,7 @@
                     } else {
                         if (posP) posP.style.display = 'none';
                     }
-                }).catch(e => console.log('Polling error', e));
+                }).catch(e => { console.log('Polling error', e); alert('Error en polling de posición: ' + e.message); });
         }
         setInterval(updateQueuePosition, 3000);
         setInterval(updateUnreadBadge, 3000);
