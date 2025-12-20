@@ -230,6 +230,10 @@ def accept_waiting(id):
             waiting.queue_order = max_order + 1
             waiting.status = 'accepted'
             db.session.commit()
+            # Send notification message to patient
+            message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content=f"Tu solicitud ha sido aceptada por el doctor {current_user.name or current_user.username}.")
+            db.session.add(message)
+            db.session.commit()
         except Exception as e:
             db.session.rollback()
             flash('Error al aceptar la solicitud.', 'error')
@@ -243,6 +247,10 @@ def reject_waiting(id):
     waiting = WaitingRoom.query.get(id)
     if waiting and waiting.doctor_id == current_user.id:
         waiting.status = 'rejected'
+        db.session.commit()
+        # Send notification message to patient
+        message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content=f"Tu solicitud ha sido rechazada por el doctor {current_user.name or current_user.username}.")
+        db.session.add(message)
         db.session.commit()
     return redirect(url_for('waiting_requests'))
 
