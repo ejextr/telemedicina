@@ -495,6 +495,14 @@ def api_unread_count():
     count = Message.query.filter_by(receiver_id=current_user.id, read=False).count()
     return jsonify({'unread': count})
 
+@app.route('/api/latest_unread_message')
+@login_required
+def api_latest_unread_message():
+    message = Message.query.filter_by(receiver_id=current_user.id, read=False).order_by(Message.timestamp.desc()).first()
+    if message:
+        return jsonify({'message': {'content': message.content, 'sender': message.sender.username}})
+    return jsonify({'message': None})
+
 @app.route('/migrate_db')
 def migrate_db():
     try:

@@ -177,7 +177,6 @@
         }
 
         let lastUnread = 0;
-        alert('Script loaded on Waiting Requests');
         function playNotificationSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -207,7 +206,7 @@
                         badge.style.display = 'none';
                     }
                     lastUnread = data.unread;
-                }).catch(e => { console.log('Unread polling error', e); alert('Error en polling de mensajes no leídos: ' + e.message); });
+                }).catch(e => console.log('Unread polling error', e));
         }
         setInterval(updateUnreadBadge, 3000);
         updateUnreadBadge();

@@ -130,6 +130,15 @@
             <div id="response"></div>
         </div>
     </div>
+    <div id="videoCallModal" class="modal" style="background-color: rgba(0,0,0,0.8);">
+        <div class="modal-content" style="text-align: center; margin-top: 20%;">
+            <h2 style="color: red;">¡Llamada Entrante!</h2>
+            <p>El médico <span id="callerName"></span> te está llamando.</p>
+            <button onclick="joinCall()" style="background-color: #4CAF50; color: white; padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer;">Unirse a la Llamada</button>
+            <br><br>
+            <button onclick="closeVideoCallModal()" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Ignorar</button>
+        </div>
+    </div>
     <script>
         let currentDoctorId;
         function openModal(doctorId, doctorName) {
@@ -140,6 +149,18 @@
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
             document.getElementById('response').innerHTML = '';
+        }
+        function showVideoCallModal(caller) {
+            document.getElementById('callerName').textContent = caller;
+            document.getElementById('videoCallModal').style.display = 'block';
+        }
+        function closeVideoCallModal() {
+            document.getElementById('videoCallModal').style.display = 'none';
+        }
+        function joinCall() {
+            // Assuming the doctor is the caller, redirect to chat
+            window.open('/messages', '_blank');
+            closeVideoCallModal();
         }
         document.getElementById('waitingForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -164,7 +185,6 @@
         }
 
         let lastUnread = 0;
-        alert('Script loaded on Guardias');
         function playNotificationSound() {
             // Simple beep using Web Audio API
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -185,17 +205,27 @@
                 .then(data => {
                     console.log('Unread count:', data.unread);
                     const badge = document.getElementById('unread-badge');
-                    if (data.unread > 0) {
-                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                        badge.style.display = 'inline';
-                        if (data.unread > lastUnread) {
-                            playNotificationSound();
+                    if (badge) {
+                        if (data.unread > 0) {
+                            badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                            badge.style.display = 'inline';
+                            if (data.unread > lastUnread) {
+                                playNotificationSound();
+                                // Check for video call
+                                fetch('/api/latest_unread_message')
+                                    .then(r => r.json())
+                                    .then(msgData => {
+                                        if (msgData.message && msgData.message.content.includes('Videollamada')) {
+                                            showVideoCallModal(msgData.message.sender);
+                                        }
+                                    }).catch(e => console.log('Latest message error', e));
+                            }
+                        } else {
+                            badge.style.display = 'none';
                         }
-                    } else {
-                        badge.style.display = 'none';
                     }
                     lastUnread = data.unread;
-                }).catch(e => { console.log('Unread polling error', e); alert('Error en polling de mensajes no leídos: ' + e.message); });
+                }).catch(e => console.log('Unread polling error', e));
         }
 
         function updateQueuePosition() {
@@ -205,13 +235,15 @@
                     console.log('Queue position:', data.position);
                     const posEl = document.getElementById('pos-num');
                     const posP = document.getElementById('queue-position');
-                    if (data.position) {
-                        posEl.textContent = data.position;
-                        if (posP) posP.style.display = 'block';
-                    } else {
-                        if (posP) posP.style.display = 'none';
+                    if (posEl && posP) {
+                        if (data.position) {
+                            posEl.textContent = data.position;
+                            posP.style.display = 'block';
+                        } else {
+                            posP.style.display = 'none';
+                        }
                     }
-                }).catch(e => { console.log('Polling error', e); alert('Error en polling de posición: ' + e.message); });
+                }).catch(e => console.log('Polling error', e));
         }
         setInterval(updateQueuePosition, 3000);
         setInterval(updateUnreadBadge, 3000);
