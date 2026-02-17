@@ -560,6 +560,7 @@ def github_deploy(secret):
 # ===================================================================
 
 # test auto-deploy 17-feb-2026
+# buenas funciones me tira el nuevo grok
 
 if __name__ == '__main__':
     with app.app_context():
