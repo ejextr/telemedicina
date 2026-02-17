@@ -1,0 +1,18 @@
+finalización unilateral de la consulta
+feedback a partir de la finalizacion unilateral
+diseño: menos botones, todo en el menu hamburguesa.para pacientes dejamos guardia turno y emergencia. todo lo demas hamburguesa
+la parte de mis salas de espera esta condicional a que estés en una sala de espera. esta parte desplaza a los botones hacia abajo, dado que es lo principal
+
+-----------------------------------------------------------------------------
+
+para medicos: 2 tarjetas, una de guardia y una de turnos, todo lo demas al menu hamburguesa
+tarjeta guardia:
+indicador de estado de guardia --> y activar o desactivar
+boton para entrar a gestión
+SI guardia ON ==> mostrar cantidad de pacientes en espera
+
+tarjeta turnos:
+indicador de estado de turnos --> y On Off // condicional a que tengas turnos reservados
+boton para entrar a gestión
+SI turnos ON ==> mostrar cantidad de pacientes del día
+El paciente tiene que poder entrar a la sala de espera de los turnos que tiene reservados mas allá de que el medico esté conectado o no, y tiene que ver si el médico está on-line
