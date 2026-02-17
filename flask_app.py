@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import os
+import subprocess
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -527,6 +528,38 @@ def api_appointments():
     return jsonify([{'id': a.id, 'patient_name': a.patient.name, 'doctor_name': a.doctor.username, 'date': a.date.isoformat(), 'reason': a.reason} for a in appointments])
     appointments = Appointment.query.all()
     return jsonify([{'id': a.id, 'patient_name': a.patient.name, 'doctor_name': a.doctor.username, 'date': a.date.isoformat(), 'reason': a.reason} for a in appointments])
+
+# ==================== AUTO-DEPLOY CON GITHUB WEBHOOK ====================
+@app.route('/github-deploy/<secret>', methods=['POST'])
+def github_deploy(secret):
+    # Tu secreto único (¡NO lo compartas nunca!)
+    EXPECTED_SECRET = "S5A-1YvL9VFtStsLOIq3wjhseU0ozrV0WItnPYYNiRU"
+    
+    if secret != EXPECTED_SECRET:
+        return "Acceso denegado", 403
+    
+    try:
+        # 1. Ir a la carpeta y hacer git pull
+        os.chdir("/home/ejextr/telemedicina")
+        pull_result = subprocess.check_output(
+            ["git", "pull", "origin", "main"],
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        
+        # 2. Recargar la app (tocando el archivo WSGI)
+        wsgi_path = "/var/www/ejextr.pythonanywhere.com_wsgi.py"
+        subprocess.check_call(["touch", wsgi_path])
+        
+        print("✅ AUTO-DEPLOY EXITOSO")
+        return f"✅ Actualizado correctamente!\n{pull_result}", 200
+        
+    except Exception as e:
+        print(f"❌ Error en auto-deploy: {e}")
+        return f"Error: {str(e)}", 500
+# ===================================================================
+
+# test auto-deploy 17-feb-2026
 
 if __name__ == '__main__':
     with app.app_context():
