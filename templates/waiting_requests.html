@@ -96,9 +96,7 @@
                         <button onclick="moveUp({{ request.id }})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">↑</button>
                         <button onclick="moveDown({{ request.id }})" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px;">↓</button>
                         {% if request.status in ['accepted', 'in_room'] %}
-                        <form action="{{ url_for('start_video_call', user_id=request.patient_id) }}" method="POST" style="display:inline;">: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
-                            <button type="submit" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
-                        </form>
+                        <button onclick="startDoctorVideo({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
                         {% endif %}
                     </div>}
                 </div>for %}
@@ -212,12 +210,13 @@ ext = new (window.AudioContext || window.webkitAudioContext)();
         }
         setInterval(updateUnreadBadge, 3000);
         updateUnreadBadge();    </script>
+
     <script>
         const currentUserId = {{ current_user.id }};
         let jitsiApi = null;
 
         function startDoctorVideo(patientId) {
-            fetch(`/api/start_video_call/${patientId}`, { method: 'POST' })
+            fetch(`/api/start_video_call/${patientId}`, {method: 'POST'})
                 .then(r => r.json())
                 .then(data => {
                     if (data.room) {
