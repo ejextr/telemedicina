@@ -509,8 +509,35 @@ def api_unread_count():
 def api_latest_unread_message():
     message = Message.query.filter_by(receiver_id=current_user.id, read=False).order_by(Message.timestamp.desc()).first()
     if message:
-        return jsonify({'message': {'content': message.content, 'sender': message.sender.username}})
+        return jsonify({'message': {'content': message.content, 'sender': message.sender.username, 'sender_id': message.sender.id}})
     return jsonify({'message': None})
+
+@app.route('/api/start_video_call/<int:user_id>', methods=['POST'])
+@login_required
+def api_start_video_call(user_id):
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    waiting = WaitingRoom.query.filter_by(doctor_id=current_user.id, patient_id=user_id, status='accepted').first()
+    if waiting:
+        waiting.status = 'in_room'
+        db.session.commit()
+    room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
+    return jsonify({'room': room_name})
+
+@app.route('/api/room_name/<int:user_id>')
+@login_required
+def api_room_name(user_id):
+    waiting = WaitingRoom.query.filter(
+        db.or_(
+            db.and_(WaitingRoom.patient_id == current_user.id, WaitingRoom.doctor_id == user_id),
+            db.and_(WaitingRoom.doctor_id == current_user.id, WaitingRoom.patient_id == user_id)
+        ),
+        WaitingRoom.chat_enabled == True
+    ).first()
+    if not waiting:
+        return jsonify({'error': 'No active chat'}), 403
+    room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
+    return jsonify({'room': room_name})
 
 @app.route('/migrate_db')
 def migrate_db():
