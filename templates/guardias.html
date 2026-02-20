@@ -7,11 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://meet.jit.si/external_api.js"></script>
     <style>
-
-            position: absolute;
-            bottom: 20px;
-            width: calc(100% - 40px);
-        }
         .doctor-card {
             background-color: var(--card);
             border: 1px solid var(--border);
@@ -131,83 +126,58 @@
             <div id="response"></div>
         </div>
     </div>
-    <div id="videoCallModal" class="modal" style="background-color: rgba(0,0,0,0.8);">
-        <div class="modal-content" style="text-align: center; margin-top: 20%;">
-            <h2 style="color: red;">¡Llamada Entrante!</h2>
-            <p>El médico <span id="callerName"></span> te está llamando.</p>
-            <span id="callerId" style="display:none;"></span>
-            <button onclick="joinCall()" style="background-color: #4CAF50; color: white; padding: 15px 30px; font-size: 18px; border: none; border-radius: 5px; cursor: pointer;">Unirse a la Llamada</button>
-            <br><br>
-            <button onclick="closeVideoCallModal()" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Ignorar</button>
+    <div id="videoContainer" style="display:none; position:fixed; bottom:10px; right:10px; width:400px; height:300px; border:2px solid #ccc; background:white; z-index:1000; border-radius:8px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+        <div style="background:#f0f0f0; padding:5px; border-bottom:1px solid #ccc; display:flex; justify-content:space-between; align-items:center;">
+            <span>Videollamada</span>
+            <button onclick="closeVideo()" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
         </div>
+        <div id="jitsiContainer" style="height:calc(100% - 40px); width:100%;"></div>
     </div>
-
-    <div id="jitsiModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.9);">
-        <div style="position:absolute; top:10px; right:10px;">
-            <span class="close" onclick="closeJitsiModal()" style="color:white; font-size:30px; cursor:pointer;">&times;</span>
-        </div>
-        <div id="jitsiContainer" style="height:90vh; width:95%; margin:auto;"></div>
-    </div>
-
     <script>
         let currentDoctorId;
-        function openModal(doctorId, doctorName) {name, senderId) {
-            currentDoctorId = doctorId;me').textContent = name;
+        function openModal(doctorId, doctorName) {
+            currentDoctorId = doctorId;
             document.getElementById('doctorName').textContent = doctorName;
             document.getElementById('modal').style.display = 'block';
-        }   document.getElementById('videoCallModal').style.display = 'block';
+        }
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
-            document.getElementById('response').innerHTML = '';   document.getElementById('videoCallModal').style.display = 'none';
-        }ument.getElementById('callerId').textContent;
-        function showVideoCallModal(caller) {
-            document.getElementById('callerName').textContent = caller;
-            document.getElementById('videoCallModal').style.display = 'block';
-        }           if (data.room) {
-        function closeVideoCallModal() {
-            document.getElementById('videoCallModal').style.display = 'none';
+            document.getElementById('response').innerHTML = '';
         }
-        function joinCall() {
-            // Assuming the doctor is the caller, redirect to chatonsole.log(e)
-            window.open('/messages', '_blank');e doctor is the caller, redirect to chat
-            closeVideoCallModal();
-        }ideoCallModal();
         document.getElementById('waitingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();t.getElementById('waitingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const symptoms = document.getElementById('symptoms').value;
             const response = await fetch(`/enter_waiting_room/${currentDoctorId}`, {
-                method: 'POST',wait fetch(`/enter_waiting_room/${currentDoctorId}`, {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',   headers: {
-                },         'Content-Type': 'application/x-www-form-urlencoded',
-                body: new URLSearchParams({ symptoms })   },
-            });    body: new URLSearchParams({ symptoms })
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ symptoms })
+            });
             const data = await response.json();
             document.getElementById('response').innerHTML = `<p>${data.message}</p>`;
-            if (response.ok) {   document.getElementById('response').innerHTML = `<p>${data.message}</p>`;
-                setTimeout(() => closeModal(), 2000);            if (response.ok) {
-            }() => closeModal(), 2000);
+            if (response.ok) {
+                setTimeout(() => closeModal(), 2000);
+            }
         });
     </script>
-
     <script>
         function toggleMenu() {
-            document.getElementById('menu').classList.toggle('open');').classList.toggle('open');
+            document.getElementById('menu').classList.toggle('open');
         }
 
         let lastUnread = 0;
         function playNotificationSound() {
-            // Simple beep using Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)(); window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();   const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();            const gainNode = audioContext.createGain();
-            oscillator.connect(gainNode);e);
-            gainNode.connect(audioContext.destination);ext.destination);
-            oscillator.frequency.value = 800;ue = 800;
-            oscillator.type = 'square';square';
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);rentTime);
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);oContext.currentTime + 0.2);
+            oscillator.stop(audioContext.currentTime + 0.2);
         }
 
         function updateUnreadBadge() {
@@ -215,24 +185,23 @@
                 .then(r => r.json())
                 .then(data => {
                     console.log('Unread count:', data.unread);
-                    const badge = document.getElementById('unread-badge');d('unread-badge');
+                    const badge = document.getElementById('unread-badge');
                     if (badge) {
                         if (data.unread > 0) {
                             badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                            badge.style.display = 'inline';isplay = 'inline';
+                            badge.style.display = 'inline';
                             if (data.unread > lastUnread) {
-                                playNotificationSound();   playNotificationSound();
-                                // Check for video call// Check for video call
-                                fetch('/api/latest_unread_message')_message')
-                                    .then(r => r.json())           .then(r => r.json())
-                                    .then(msgData => {               .then(msgData => {
-                                        if (msgData.message && msgData.message.content.includes('Videollamada')) {sgData.message && msgData.message.content.includes('Videollamada')) {
-                                            showVideoCallModal(msgData.message.sender);.message.sender);
-                                        }                               }
-                                    }).catch(e => console.log('Latest message error', e));                                    }).catch(e => console.log('Latest message error', e));
+                                playNotificationSound();
+                                fetch('/api/latest_unread_message')
+                                    .then(r => r.json())
+                                    .then(msgData => {
+                                        if (msgData.message && msgData.message.content.includes('Videollamada')) {
+                                            joinVideoCall(msgData.message.sender_id);
+                                        }
+                                    }).catch(e => console.log('Latest message error', e));
                             }
                         } else {
-                            badge.style.display = 'none';yle.display = 'none';
+                            badge.style.display = 'none';
                         }
                     }
                     lastUnread = data.unread;
@@ -241,69 +210,59 @@
 
         function updateQueuePosition() {
             fetch('/api/queue_position')
-                .then(r => r.json())n())
+                .then(r => r.json())
                 .then(data => {
-                    console.log('Queue position:', data.position);le.log('Queue position:', data.position);
-                    const posEl = document.getElementById('pos-num');onst posEl = document.getElementById('pos-num');
-                    const posP = document.getElementById('queue-position');-position');
-                    if (posEl && posP) {           if (posEl && posP) {
+                    console.log('Queue position:', data.position);
+                    const posEl = document.getElementById('pos-num');
+                    const posP = document.getElementById('queue-position');
+                    if (posEl && posP) {
                         if (data.position) {
-                            posEl.textContent = data.position; = data.position;
-                            posP.style.display = 'block';sP.style.display = 'block';
-                        } else {se {
-                            posP.style.display = 'none';               posP.style.display = 'none';
-                        }                 }
-                    }             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-</html></body>    </div>        <div id="jitsiContainer" style="height:90vh; width:95%; margin:auto;"></div>        </div>            <span class="close" onclick="closeJitsiModal()" style="color:white; font-size:30px; cursor:pointer;">&times;</span>        <div style="position:absolute; top:10px; right:10px;">    <div id="jitsiModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.9);">    </script>        }            document.getElementById('jitsiModal').style.display = 'none';            }                jitsiApi = null;                jitsiApi.dispose();            if (jitsiApi) {        function closeJitsiModal() {        }            document.getElementById('jitsiModal').style.display = 'block';            jitsiApi = new JitsiMeetExternalAPI(domain, options);            };                }                    displayName: '{{ current_user.name or current_user.username }}'                userInfo: {                parentNode: document.querySelector('#jitsiContainer'),                height: '100%',                width: '100%',                roomName: room,            const options = {            const domain = 'meet.jit.si';        function initJitsi(room) {        let jitsiApi = null;        const currentUserId = {{ current_user.id }};    <script>    </script>        updateUnreadBadge();        updateQueuePosition();        setInterval(updateUnreadBadge, 3000);        setInterval(updateQueuePosition, 3000);        }                }).catch(e => console.log('Polling error', e));                }).catch(e => console.log('Polling error', e));
+                            posEl.textContent = data.position;
+                            posP.style.display = 'block';
+                        } else {
+                            posP.style.display = 'none';
+                        }
+                    }
+                }).catch(e => console.log('Polling error', e));
         }
-        setInterval(updateQueuePosition, 3000);
+
+        let jitsiApi = null;
+        const currentUserId = {{ current_user.id }};
+        function joinVideoCall(senderId) {
+            fetch(`/api/room_name/${senderId}`, {method: 'GET'})
+                .then(r => r.json())
+                .then(data => {
+                    if (data.room) {
+                        initJitsi(data.room);
+                    }
+                }).catch(e => console.log(e));
+        }
+        function initJitsi(room) {
+            const domain = 'meet.jit.si';
+            const options = {
+                roomName: room,
+                width: '100%',
+                height: '100%',
+                parentNode: document.querySelector('#jitsiContainer'),
+                userInfo: {
+                    displayName: '{{ current_user.name or current_user.username }}'
+                }
+            };
+            jitsiApi = new JitsiMeetExternalAPI(domain, options);
+            document.getElementById('videoContainer').style.display = 'block';
+        }
+        function closeVideo() {
+            if (jitsiApi) {
+                jitsiApi.dispose();
+                jitsiApi = null;
+            }
+            document.getElementById('videoContainer').style.display = 'none';
+        }
+
         setInterval(updateUnreadBadge, 3000);
-        updateQueuePosition();
+        setInterval(updateQueuePosition, 3000);
         updateUnreadBadge();
+        updateQueuePosition();
     </script>
 </body>
 </html>
