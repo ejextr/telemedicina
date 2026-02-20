@@ -21,30 +21,6 @@
             color: var(--primary);
             margin: 0;
         }
-        .shift-toggle {
-            text-align: center;
-            margin: 20px;
-        }
-        .shift-toggle button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .shift-toggle button.off {
-            background-color: var(--danger);
-        }
-        .shift-toggle button:hover {
-            opacity: 0.9;
-        }
-        .status {
-            font-size: 16px;
-            margin-top: 10px;
-        }
         .doctor-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -91,61 +67,46 @@
     <div class="header">
         <h1>Medic-App - Panel Médico</h1>
     </div>
-    <div class="shift-toggle">
-        <button id="shiftButton" onclick="toggleShift()">{% if current_user.on_shift %}Apagar Guardia{% else %}Prender Guardia{% endif %}</button>
-        <div class="status" id="status">Estado: {% if current_user.on_shift %}En Guardia{% else %}Fuera de Guardia{% endif %}</div>
-    </div>
     <div class="doctor-grid">
-        <div class="card">
-            <h2>Solicitudes de Sala de Espera</h2>
-            <p>Revisa y gestiona solicitudes de pacientes.</p>
-            <a href="{{ url_for('waiting_requests') }}">Ver Solicitudes</a>
+        <div class="card" style="cursor: pointer;" onclick="location.href='{{ url_for('waiting_requests') }}'">
+            <h2>Guardias</h2>
+            <div id="shift-status" style="font-weight: bold; margin: 10px 0;">Cargando...</div>
+            <div>Pacientes en espera: <span id="waiting-count">0</span></div>
         </div>
-        <div class="card">
-            <h2>Mis Turnos</h2>
-            <p>Gestiona tus citas médicas.</p>
-            <a href="{{ url_for('appointments') }}">Ver Turnos</a>
-        </div>
-        <div class="card">
-            <h2>Pacientes</h2>
-            <p>Accede a la información de tus pacientes.</p>
-            <a href="{{ url_for('patients') }}">Ver Pacientes</a>
-        </div>
-        <div class="card">
-            <h2>Historial</h2>
-            <p>Revisa el historial de consultas.</p>
-            <a href="#">Próximamente</a>
-        </div>
-        <div class="card">
-            <h2>Mi Perfil</h2>
-            <p>Edita tu información personal y profesional.</p>
-            <a href="{{ url_for('profile') }}">Editar Perfil</a>
+        <div class="card" style="cursor: pointer;" onclick="location.href='{{ url_for('appointments') }}'">
+            <h2>Turnos</h2>
+            <div>Hoy: <span id="today-count">0</span> pacientes</div>
+            <div>Pacientes en espera: <span id="waiting-count-turnos">0</span></div>
         </div>
     </div>
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
-        async function toggleShift() {
-            const response = await fetch('/toggle_shift', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+        async function loadDoctorInfo() {
+            try {
+                const shiftRes = await fetch('/api/doctor/shift_status');
+                const shift = await shiftRes.json();
+                const statusEl = document.getElementById('shift-status');
+                if (shift.on_shift) {
+                    statusEl.innerHTML = `<span style="color: green;">ON</span> hasta ${shift.shift_end_display || 'N/A'}`;
+                } else {
+                    statusEl.innerHTML = `<span style="color: red;">OFF</span>`;
                 }
-            });
-            const data = await response.json();
-            const button = document.getElementById('shiftButton');
-            const status = document.getElementById('status');
-            if (data.on_shift) {
-                button.textContent = 'Apagar Guardia';
-                button.classList.remove('off');
-                status.textContent = 'Estado: En Guardia';
-            } else {
-                button.textContent = 'Prender Guardia';
-                button.classList.add('off');
-                status.textContent = 'Estado: Fuera de Guardia';
-            }
+            } catch(e) { console.error('Shift status error:', e); }
+            try {
+                const waitRes = await fetch('/api/doctor/waiting_count');
+                const wait = await waitRes.json();
+                document.getElementById('waiting-count').textContent = wait.pending;
+                document.getElementById('waiting-count-turnos').textContent = wait.pending;
+            } catch(e) { console.error('Waiting count error:', e); }
+            try {
+                const todayRes = await fetch('/api/doctor/today_appointments');
+                const today = await todayRes.json();
+                document.getElementById('today-count').textContent = today.today_count;
+            } catch(e) { console.error('Today appointments error:', e); }
         }
+        loadDoctorInfo();
     </script>
 </body>
 </html>

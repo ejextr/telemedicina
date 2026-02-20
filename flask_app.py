@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
     description = db.Column(db.Text, nullable=True)
     specialty = db.Column(db.String(100), nullable=True)  # Only for doctors
     on_shift = db.Column(db.Boolean, default=False)  # For doctors
+    shift_end_time = db.Column(db.DateTime, nullable=True)
 
 class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -128,6 +129,11 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    now = datetime.utcnow()
+    if current_user.role == 'doctor' and current_user.on_shift and current_user.shift_end_time and current_user.shift_end_time < now:
+        current_user.on_shift = False
+        current_user.shift_end_time = None
+        db.session.commit()
     if current_user.role == 'doctor':
         return render_template('doctor_dashboard.html')
     return render_template('dashboard.html')
@@ -159,14 +165,29 @@ def api_login():
 @login_required
 def api_patients():
     patients = Patient.query.all()
+
 @app.route('/toggle_shift', methods=['POST'])
 @login_required
 def toggle_shift():
     if current_user.role != 'doctor':
         return jsonify({'error': 'Not a doctor'}), 403
-    current_user.on_shift = not current_user.on_shift
+    data = request.get_json() or {}
+    on = data.get('on', not current_user.on_shift)
+    end_time_str = data.get('end_time')
+    if on:
+        if not end_time_str:
+            return jsonify({'error': 'end_time required when turning on'}), 400
+        try:
+            end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+            current_user.shift_end_time = end_time
+        except ValueError:
+            return jsonify({'error': 'Invalid end_time format (YYYY-MM-DDTHH:MM)'}), 400
+    else:
+        current_user.shift_end_time = None
+    current_user.on_shift = on
     db.session.commit()
-    return jsonify({'on_shift': current_user.on_shift})
+    end_str = current_user.shift_end_time.strftime('%H:%M') if current_user.shift_end_time else None
+    return jsonify({'on_shift': on, 'shift_end': end_str})
 
 @app.route('/guardias')
 @login_required
@@ -212,6 +233,10 @@ def waiting_requests():
     if current_user.role != 'doctor':
         return redirect(url_for('dashboard'))
     now = datetime.utcnow()
+    if current_user.on_shift and current_user.shift_end_time and current_user.shift_end_time < now:
+        current_user.on_shift = False
+        current_user.shift_end_time = None
+        db.session.commit()
     yesterday = now - timedelta(hours=24)
     active_requests = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status.in_(['pending', 'accepted', 'in_room'])).order_by(WaitingRoom.queue_order).all()
     today_consultations = WaitingRoom.query.filter(WaitingRoom.doctor_id == current_user.id, WaitingRoom.status == 'completed', WaitingRoom.end_time >= yesterday).order_by(WaitingRoom.end_time.desc()).all()
@@ -615,6 +640,11 @@ if __name__ == '__main__':
         # Add missing columns if needed
         try:
             db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+            db.session.commit()
+        except:
+            pass  # Column already exists
+        try:
+            db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
             db.session.commit()
         except:
             pass  # Column already exists

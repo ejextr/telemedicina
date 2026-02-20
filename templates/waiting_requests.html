@@ -51,6 +51,54 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .shift-control {
+            padding: 20px;
+            background: var(--card);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +119,15 @@
     </div>
     <div class="header">
         <h1>Medic-App - Gestión de Consultas</h1>
+    </div>
+    <div class="shift-control">
+        <label class="switch">
+            <input type="checkbox" id="doctor-shift-toggle" onchange="handleDoctorShift()">
+            <span class="slider"></span>
+        </label>
+        <label for="doctor-shift-toggle" style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
+        <input type="datetime-local" id="shift-end-time" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px;">
+        <span id="shift-end-label"></span>
     </div>
     <div style="padding: 20px;">
         <h2>Salas de Espera Activas</h2>

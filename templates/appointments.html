@@ -10,16 +10,33 @@
     <div class="container">
         <h1>Appointments</h1>
         <nav>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('patients') }}">Patients</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
+            <button class="hamburger" onclick="toggleMenu()">☰</button>
+            <div class="menu" id="menu">
+                <ul>
+                    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('waiting_requests') }}">Guardias</a></li>
+                    <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+                    <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
+                </ul>
+                <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+            </div>
         </nav>
-        <ul id="appointmentsList">
-            {% for appointment in appointments %}
-            <li>{{ appointment.patient.name }} with {{ appointment.doctor.username }} on {{ appointment.date }} - {{ appointment.reason }}</li>
-            {% endfor %}
-        </ul>
+        <div class="header">
+            <h1>Medic-App - Mis Turnos</h1>
+        </div>
+        <div style="padding: 20px;">
+            <h2>Turnos Programados</h2>
+            <ul id="appointmentsList">
+                {% for appointment in appointments %}
+                <li>{{ appointment.patient.name }} con {{ appointment.doctor.username }} el {{ appointment.date.strftime('%d/%m/%Y %H:%M') }} - {{ appointment.reason }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+    </script>
 </body>
 </html>

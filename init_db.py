@@ -28,7 +28,8 @@ with app.app_context():
             name=user_data['name'],
             description=user_data['description'],
             specialty=user_data['specialty'],
-            on_shift=user_data['on_shift']
+            on_shift=user_data['on_shift'],
+            shift_end_time=None
         )
         db.session.add(user)
     db.session.commit()
