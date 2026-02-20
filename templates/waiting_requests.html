@@ -216,15 +216,17 @@
         {% endfor %}
     </div>
     <script>
+        console.log('JS waiting_requests loaded');
+
         function toggleMenu() {
-            alert('Toggle menu clicked!');
-            document.getElementById('menu').classList.toggle('open');
+            const menu = document.getElementById('menu');
+            if (menu) {
+                menu.classList.toggle('open');
+            } else {
+                console.error('Menu element not found');
+            }
         }
 
-        // Real-time updates for waiting requests
-        setInterval(() => {
-            location.reload();
-        }, 10000); // Reload every 10 seconds
         function moveUp(id) {
             fetch(`/move_up/${id}`, { method: 'POST' })
                 .then(response => response.json())
@@ -234,6 +236,7 @@
                     }
                 });
         }
+
         function moveDown(id) {
             fetch(`/move_down/${id}`, { method: 'POST' })
                 .then(response => response.json())
@@ -241,14 +244,14 @@
                     if (data.success) {
                         location.reload();
                     }
-         
+                });
+        }
+
         function endConsultation(id) {
-            alert('End consultation button clicked for ID: ' + id);
             if (confirm('¿Finalizar consulta? Esto cerrará la sesión.')) {
                 fetch(`/end_consultation/${id}`, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
-                        alert('Server response: ' + JSON.stringify(data));
                         if (data.success) {
                             alert('Consulta finalizada exitosamente');
                             location.reload();
@@ -260,8 +263,8 @@
                         alert('Error de conexión: ' + e.message);
                     });
             }
-        }       });
         }
+
         let lastUnread = 0;
         function playNotificationSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -279,18 +282,28 @@
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
         }
+
         function updateUnreadBadge() {
             fetch('/api/unread_count')
                 .then(r => r.json())
                 .then(data => {
                     console.log('Unread count:', data.unread);
                     const badge = document.getElementById('unread-badge');
-                    if (data.unread > 0) {
-                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
-                        badge.style.display = 'inline';
-                        if (data.unread > lastUnread) {
-                            playNotificationSound();
+                    if (badge) {
+                        if (data.unread > 0) {
+                            badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                            badge.style.display = 'inline';
+                            if (data.unread > lastUnread) {
+                                playNotificationSound();
+                            }
+                        } else {
+                            badge.style.display = 'none';
                         }
+                        lastUnread = data.unread;
+                    }
+                }).catch(e => console.error('Unread badge error:', e));
+        }
+
         function handleTurnOn() {
             const now = new Date();
             const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
@@ -307,15 +320,7 @@
             if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
                 return false; // Cancel submit
             }
-            return true; // Submit   }
-                toggle.checked = newChecked;
-                updateShiftDisplay();
-                alert('Success: toggle set to ' + newChecked); // DEBUG
-            } catch(e) {
-                console.error(e);
-                alert('Error al actualizar guardia');
-                toggle.checked = currentChecked; // Revert
-            }
+            return true; // Submit
         }
 
         async function updateShiftDisplay() {
@@ -323,10 +328,10 @@
                 const res = await fetch('/api/doctor/shift_status');
                 const data = await res.json();
                 const label = document.getElementById('shift-end-label');
-                if (data.on_shift && data.end_time) {
+                if (label && data.on_shift && data.end_time) {
                     const end = new Date(data.end_time);
                     label.textContent = ` (hasta ${end.toLocaleString()})`;
-                } else {
+                } else if (label) {
                     label.textContent = '';
                 }
             } catch(e) {
@@ -338,18 +343,21 @@
             try {
                 const res = await fetch('/api/waiting_requests');
                 const requests = await res.json();
+                console.log('Waiting requests:', requests);
                 // Update pending
                 let pendingHtml = '';
-                let pendingCount = 0;
-                requests.filter(r => r.status === 'pending').forEach(r => {
-                    pendingCount++;
+                requests.pending.forEach(r => {
                     pendingHtml += `
-                        <div class="request-card" draggable="true" ondragstart="drag(event)" id="pending-${r.id}">
-                            <h3>${r.patient_name} <span class="badge">${r.queue_position}</span></h3>
+                        <div class="request-card">
+                            <h3>${r.patient_name}</h3>
                             <p>${r.symptoms}</p>
                             <div class="buttons">
-                                <button class="accept-button" onclick="acceptRequest(${r.id})">Aceptar</button>
-                                <button class="reject-button" onclick="rejectRequest(${r.id})">Rechazar</button>
+                                <form action="{{ url_for('accept_waiting', id=r.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="accept-button">Aceptar</button>
+                                </form>
+                                <form action="{{ url_for('reject_waiting', id=r.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="reject-button">Rechazar</button>
+                                </form>
                             </div>
                         </div>`;
                 });
@@ -357,32 +365,28 @@
 
                 // Update active
                 let activeHtml = '';
-                requests.filter(r => r.status === 'accepted' || r.status === 'in_room').forEach(r => {
+                requests.accepted.forEach(r => {
                     activeHtml += `
-                        <div class="request-card" draggable="true" ondragstart="drag(event)" id="active-${r.id}">
+                        <div class="request-card">
                             <h3>${r.patient_name}</h3>
                             <p>${r.symptoms}</p>
                             <div class="buttons">
-                                <button onclick="startVideo(${r.patient_id})">Videollamada</button>
-                                <button class="reject-button" onclick="endConsult(${r.id})">Finalizar</button>
+                                <button onclick="startDoctorVideo(${r.patient_id})">Videollamada</button>
+                                <button class="reject-button" onclick="endConsultation(${r.id})">Finalizar</button>
                             </div>
                         </div>`;
                 });
                 document.getElementById('active-section').innerHTML = activeHtml || '<p>No hay activas</p>';
-
-                // Re-attach drag events if needed
             } catch(e) {
                 console.error('Update requests error:', e);
             }
         }
 
-        // Initialize shift display on load
+        // Initialize on load
         updateShiftDisplay();
-        console.log('JS waiting_requests loaded');
         updateUnreadBadge();
-        // Initial load
         updateWaitingRequests();
-        setInterval(updateWaitingRequests, 3000); // Poll every 3s like patients
+        setInterval(updateWaitingRequests, 5000); // Poll every 5s
     </script>
     <script>
         const currentUserId = {{ current_user.id }};

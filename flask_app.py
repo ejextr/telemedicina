@@ -405,12 +405,9 @@ def reject_waiting(id):
 @app.route('/end_consultation/<int:id>', methods=['POST'])
 @login_required
 def end_consultation(id):
-    print(f"End consultation called: id={id}, doctor={current_user.id}, role={current_user.role}")
     if current_user.role != 'doctor':
-        print("Not a doctor")
         return jsonify({'error': 'Not a doctor'}), 403
     waiting = WaitingRoom.query.get(id)
-    print(f"Waiting found: {waiting}, doctor_id={waiting.doctor_id if waiting else None}, status={waiting.status if waiting else None}")
     if waiting and waiting.doctor_id == current_user.id and waiting.status in ['accepted', 'in_room']:
         waiting.status = 'completed'
         waiting.end_time = datetime.utcnow()
@@ -419,9 +416,7 @@ def end_consultation(id):
         message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content=f"La consulta ha finalizado. Gracias por usar MedicApp.")
         db.session.add(message)
         db.session.commit()
-        print("Consultation ended successfully")
         return jsonify({'success': True})
-    print("Failed to end consultation")
     return jsonify({'error': 'Consulta no encontrada o no autorizada'}), 404
 
 @app.route('/enable_chat/<int:id>', methods=['POST'])
