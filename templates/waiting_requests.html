@@ -261,13 +261,14 @@
 
         async function handleDoctorShift(event) {
             event.stopPropagation();
-            console.log('Toggle clicked'); // DEBUG
+            console.log('Toggle clicked, current:', toggle.checked); // DEBUG
             const toggle = document.getElementById('doctor-shift-toggle');
             const currentChecked = toggle.checked;
-            let newChecked = !currentChecked;
             let endTime = null;
+            let newChecked;
 
-            if (newChecked) {
+            if (!currentChecked) {
+                // OFF → prender: prompt hora
                 const now = new Date();
                 const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
                 const defaultStr = defaultEnd.toISOString().slice(0, 16);
@@ -275,10 +276,13 @@
                 if (!endTime) {
                     return;
                 }
+                newChecked = true;
             } else {
+                // ON → apagar: confirm
                 if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
                     return;
                 }
+                newChecked = false;
             }
 
             const body = {on: newChecked, end_time: endTime};
@@ -318,10 +322,55 @@
             }
         }
 
+        async function updateWaitingRequests() {
+            try {
+                const res = await fetch('/api/waiting_requests');
+                const requests = await res.json();
+                // Update pending
+                let pendingHtml = '';
+                let pendingCount = 0;
+                requests.filter(r => r.status === 'pending').forEach(r => {
+                    pendingCount++;
+                    pendingHtml += `
+                        <div class="request-card" draggable="true" ondragstart="drag(event)" id="pending-${r.id}">
+                            <h3>${r.patient_name} <span class="badge">${r.queue_position}</span></h3>
+                            <p>${r.symptoms}</p>
+                            <div class="buttons">
+                                <button class="accept-button" onclick="acceptRequest(${r.id})">Aceptar</button>
+                                <button class="reject-button" onclick="rejectRequest(${r.id})">Rechazar</button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('pending-section').innerHTML = pendingHtml || '<p>No hay pendientes</p>';
+
+                // Update active
+                let activeHtml = '';
+                requests.filter(r => r.status === 'accepted' || r.status === 'in_room').forEach(r => {
+                    activeHtml += `
+                        <div class="request-card" draggable="true" ondragstart="drag(event)" id="active-${r.id}">
+                            <h3>${r.patient_name}</h3>
+                            <p>${r.symptoms}</p>
+                            <div class="buttons">
+                                <button onclick="startVideo(${r.patient_id})">Videollamada</button>
+                                <button class="reject-button" onclick="endConsult(${r.id})">Finalizar</button>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('active-section').innerHTML = activeHtml || '<p>No hay activas</p>';
+
+                // Re-attach drag events if needed
+            } catch(e) {
+                console.error('Update requests error:', e);
+            }
+        }
+
         // Initialize shift display on load
         updateShiftDisplay();
         console.log('JS waiting_requests loaded');
         updateUnreadBadge();
+        // Initial load
+        updateWaitingRequests();
+        setInterval(updateWaitingRequests, 3000); // Poll every 3s like patients
     </script>
     <script>
         const currentUserId = {{ current_user.id }};
