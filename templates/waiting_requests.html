@@ -116,8 +116,8 @@
         </ul>
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
     <div class="header">
-        <button class="hamburger" onclick="toggleMenu()">☰</button>
         <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div class="shift-control">
@@ -217,13 +217,14 @@
     </div>
     <script>
         function toggleMenu() {
+            alert('Toggle menu clicked!');
             document.getElementById('menu').classList.toggle('open');
         }
 
         // Real-time updates for waiting requests
         setInterval(() => {
             location.reload();
-        }, 5000); // Reload every 5 seconds
+        }, 10000); // Reload every 10 seconds
         function moveUp(id) {
             fetch(`/move_up/${id}`, { method: 'POST' })
                 .then(response => response.json())
@@ -242,10 +243,12 @@
                     }
          
         function endConsultation(id) {
+            alert('End consultation button clicked for ID: ' + id);
             if (confirm('¿Finalizar consulta? Esto cerrará la sesión.')) {
                 fetch(`/end_consultation/${id}`, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
+                        alert('Server response: ' + JSON.stringify(data));
                         if (data.success) {
                             alert('Consulta finalizada exitosamente');
                             location.reload();
@@ -254,7 +257,7 @@
                         }
                     }).catch(e => {
                         console.error(e);
-                        alert('Error de conexión');
+                        alert('Error de conexión: ' + e.message);
                     });
             }
         }       });

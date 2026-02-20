@@ -1145,29 +1145,12 @@ body.role-doctor .logo {
 }
 /* Header Centering */
 .header {
-    display: flex;
-    align-items: center;
-    position: relative;
-    padding-left: 60px; /* Space for hamburger */
-}
-.header .hamburger {
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    z-index: 1001;
+    padding-left: 60px;
+    text-align: center;
 }
 .header h1 {
     margin: 0;
     padding: 20px 0;
-    text-align: center;
-    flex: 1;
     color: var(--primary);
 }
 
