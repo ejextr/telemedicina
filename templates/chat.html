@@ -114,6 +114,29 @@
         // Auto-scroll to bottom
         const messagesDiv = document.getElementById('messages');
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        // Real-time chat updates
+        let lastMessageId = {{ messages[-1].id if messages else 0 }};
+        async function updateChat() {
+            try {
+                const res = await fetch('/api/chat_messages/{{ other_user.id }}');
+                const data = await res.json();
+                const newMessages = data.filter(msg => msg.id > lastMessageId);
+                if (newMessages.length > 0) {
+                    newMessages.forEach(msg => {
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = msg.sender_id == {{ current_user.id }} ? 'message sent' : 'message received';
+                        msgDiv.innerHTML = `<strong>${msg.sender}:</strong> ${msg.content}`;
+                        messagesDiv.appendChild(msgDiv);
+                        lastMessageId = msg.id;
+                    });
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+                }
+            } catch(e) {
+                console.error('Chat update error:', e);
+            }
+        }
+        setInterval(updateChat, 2000); // Poll every 2s
     </script>
 </body>
 </html>
