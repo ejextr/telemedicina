@@ -260,27 +260,23 @@
         setInterval(updateUnreadBadge, 3000);
 
         async function handleDoctorShift(event) {
-            event.preventDefault();
+            event.stopPropagation();
             console.log('Toggle clicked'); // DEBUG
             const toggle = document.getElementById('doctor-shift-toggle');
             const currentChecked = toggle.checked;
-            let newChecked = !currentChecked; // Toggle the state
+            let newChecked = !currentChecked;
             let endTime = null;
 
             if (newChecked) {
-                // Turning ON: ask for end time
                 const now = new Date();
-                const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000); // +8h
-                const defaultStr = defaultEnd.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+                const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+                const defaultStr = defaultEnd.toISOString().slice(0, 16);
                 endTime = prompt('Ingresa hora de fin de guardia (YYYY-MM-DDTHH:MM):', defaultStr);
                 if (!endTime) {
-                    // Cancel, stay off
                     return;
                 }
             } else {
-                // Turning OFF: confirm
                 if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
-                    // Cancel, stay on
                     return;
                 }
             }
@@ -302,6 +298,7 @@
             } catch(e) {
                 console.error(e);
                 alert('Error al actualizar guardia');
+                toggle.checked = currentChecked; // Revert
             }
         }
 
