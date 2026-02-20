@@ -232,7 +232,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        location.reload();
+                        updateWaitingRequests();
                     }
                 });
         }
@@ -242,8 +242,22 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        location.reload();
+                        updateWaitingRequests();
                     }
+                });
+        }
+
+        function acceptRequest(id) {
+            fetch(`/accept_waiting/${id}`, { method: 'POST' })
+                .then(() => {
+                    updateWaitingRequests(); // Refresh the list
+                });
+        }
+
+        function rejectRequest(id) {
+            fetch(`/reject_waiting/${id}`, { method: 'POST' })
+                .then(() => {
+                    updateWaitingRequests(); // Refresh the list
                 });
         }
 
@@ -254,7 +268,7 @@
                     .then(data => {
                         if (data.success) {
                             alert('Consulta finalizada exitosamente');
-                            location.reload();
+                            updateWaitingRequests(); // Refresh the list
                         } else {
                             alert('Error al finalizar consulta: ' + data.error);
                         }
@@ -352,12 +366,8 @@
                             <h3>${r.patient_name}</h3>
                             <p>${r.symptoms}</p>
                             <div class="buttons">
-                                <form action="{{ url_for('accept_waiting', id=r.id) }}" method="POST" style="display:inline;">
-                                    <button type="submit" class="accept-button">Aceptar</button>
-                                </form>
-                                <form action="{{ url_for('reject_waiting', id=r.id) }}" method="POST" style="display:inline;">
-                                    <button type="submit" class="reject-button">Rechazar</button>
-                                </form>
+                                <button class="accept-button" onclick="acceptRequest(${r.id})">Aceptar</button>
+                                <button class="reject-button" onclick="rejectRequest(${r.id})">Rechazar</button>
                             </div>
                         </div>`;
                 });
