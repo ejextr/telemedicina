@@ -274,6 +274,38 @@ def toggle_shift():
     end_str = current_user.shift_end_time.strftime('%H:%M') if current_user.shift_end_time else None
     return jsonify({'on_shift': on, 'shift_end': end_str})
 
+@app.route('/api/doctor/shift_status')
+@login_required
+def api_doctor_shift_status():
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    shift_end_display = current_user.shift_end_time.strftime('%d/%m/%Y %H:%M') if current_user.shift_end_time else None
+    return jsonify({
+        'on_shift': current_user.on_shift,
+        'shift_end_time': current_user.shift_end_time.isoformat() if current_user.shift_end_time else None,
+        'shift_end_display': shift_end_display
+    })
+
+@app.route('/api/doctor/waiting_count')
+@login_required
+def api_doctor_waiting_count():
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    pending = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='pending').count()
+    return jsonify({'pending': pending})
+
+@app.route('/api/doctor/today_appointments')
+@login_required
+def api_doctor_today_appointments():
+    if current_user.role != 'doctor':
+        return jsonify({'error': 'Not a doctor'}), 403
+    today = datetime.utcnow().date()
+    count = Appointment.query.filter(
+        Appointment.doctor_id == current_user.id,
+        db.func.date(Appointment.date) == today
+    ).count()
+    return jsonify({'today_count': count})
+
 @app.route('/guardias')
 @login_required
 def guardias():

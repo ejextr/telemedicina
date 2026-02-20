@@ -121,8 +121,8 @@
         <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div class="shift-control">
-        <label class="switch">
-            <input type="checkbox" id="doctor-shift-toggle" onchange="handleDoctorShift()" {% if current_user.on_shift %}checked{% endif %}>
+        <label class="switch" onclick="handleDoctorShift()">
+            <input type="checkbox" id="doctor-shift-toggle" {% if current_user.on_shift %}checked{% endif %}>
             <span class="slider"></span>
         </label>
         <label for="doctor-shift-toggle" style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
@@ -261,28 +261,29 @@
 
         async function handleDoctorShift() {
             const toggle = document.getElementById('doctor-shift-toggle');
-            const checked = toggle.checked;
+            const currentChecked = toggle.checked;
+            let newChecked = !currentChecked; // Toggle the state
             let endTime = null;
 
-            if (checked) {
+            if (newChecked) {
                 // Turning ON: ask for end time
                 const now = new Date();
                 const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000); // +8h
                 const defaultStr = defaultEnd.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
                 endTime = prompt('Ingresa hora de fin de guardia (YYYY-MM-DDTHH:MM):', defaultStr);
                 if (!endTime) {
-                    toggle.checked = false;
+                    // Cancel, stay off
                     return;
                 }
             } else {
                 // Turning OFF: confirm
                 if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
-                    toggle.checked = true;
+                    // Cancel, stay on
                     return;
                 }
             }
 
-            const body = {on: checked, end_time: endTime};
+            const body = {on: newChecked, end_time: endTime};
             try {
                 const res = await fetch('/toggle_shift', {
                     method: 'POST',
@@ -292,14 +293,13 @@
                 const data = await res.json();
                 if (data.error) {
                     alert(data.error);
-                    toggle.checked = !checked;
                     return;
                 }
+                toggle.checked = newChecked;
                 updateShiftDisplay();
             } catch(e) {
                 console.error(e);
                 alert('Error al actualizar guardia');
-                toggle.checked = !checked;
             }
         }
 
