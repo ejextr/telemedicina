@@ -121,11 +121,11 @@
         <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div class="shift-control">
-        <label class="switch" onclick="handleDoctorShift()">
-            <input type="checkbox" id="doctor-shift-toggle" {% if current_user.on_shift %}checked{% endif %}>
+        <label class="switch">
+            <input type="checkbox" id="doctor-shift-toggle" onclick="handleDoctorShift(event)" {% if current_user.on_shift %}checked{% endif %}>
             <span class="slider"></span>
         </label>
-        <label for="doctor-shift-toggle" style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
+        <label style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
         <span id="shift-end-label"></span>
     </div>
     <div style="padding: 20px;">
@@ -259,7 +259,8 @@
         }
         setInterval(updateUnreadBadge, 3000);
 
-        async function handleDoctorShift() {
+        async function handleDoctorShift(event) {
+            event.preventDefault();
             const toggle = document.getElementById('doctor-shift-toggle');
             const currentChecked = toggle.checked;
             let newChecked = !currentChecked; // Toggle the state

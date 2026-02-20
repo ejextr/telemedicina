@@ -93,18 +93,28 @@
                 } else {
                     statusEl.innerHTML = `<span style="color: red;">OFF</span>`;
                 }
-            } catch(e) { console.error('Shift status error:', e); }
+            } catch(e) {
+                console.error('Shift status error:', e);
+                document.getElementById('shift-status').innerHTML = `<span style="color: red;">Error al cargar</span>`;
+            }
             try {
                 const waitRes = await fetch('/api/doctor/waiting_count');
                 const wait = await waitRes.json();
                 document.getElementById('waiting-count').textContent = wait.pending;
                 document.getElementById('waiting-count-turnos').textContent = wait.pending;
-            } catch(e) { console.error('Waiting count error:', e); }
+            } catch(e) {
+                console.error('Waiting count error:', e);
+                document.getElementById('waiting-count').textContent = 'Error';
+                document.getElementById('waiting-count-turnos').textContent = 'Error';
+            }
             try {
                 const todayRes = await fetch('/api/doctor/today_appointments');
                 const today = await todayRes.json();
                 document.getElementById('today-count').textContent = today.today_count;
-            } catch(e) { console.error('Today appointments error:', e); }
+            } catch(e) {
+                console.error('Today appointments error:', e);
+                document.getElementById('today-count').textContent = 'Error';
+            }
         }
         loadDoctorInfo();
     </script>
