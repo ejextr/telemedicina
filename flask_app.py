@@ -17,6 +17,36 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+db_init_done = False
+
+@app.before_request
+def auto_db_init():
+    global db_init_done
+    if not db_init_done:
+        db_init_done = True
+        with app.app_context():
+            db.create_all()
+            try:
+                db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+                db.session.commit()
+            except:
+                pass
+            try:
+                db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
+                db.session.commit()
+            except:
+                pass
+            if User.query.count() == 0:
+                from werkzeug.security import generate_password_hash
+                users = [
+                    User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', specialty='General', on_shift=False, shift_end_time=None),
+                    User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', specialty='Cardiología', on_shift=True, shift_end_time=None),
+                    User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', on_shift=False, shift_end_time=None)
+                ]
+                for u in users:
+                    db.session.add(u)
+                db.session.commit()
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -618,9 +648,9 @@ def db_init():
         if User.query.count() == 0:
             from werkzeug.security import generate_password_hash
             users = [
-                User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', description='Admin', specialty='General', on_shift=False, shift_end_time=None),
-                User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', description='Cardiólogo', specialty='Cardiología', on_shift=True, shift_end_time=None),
-                User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', description='Paciente', specialty=None, on_shift=False, shift_end_time=None)
+                User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', specialty='General', on_shift=False, shift_end_time=None),
+                User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', specialty='Cardiología', on_shift=True, shift_end_time=None),
+                User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', on_shift=False, shift_end_time=None)
             ]
             for u in users:
                 db.session.add(u)
