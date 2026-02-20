@@ -121,10 +121,18 @@
         <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div class="shift-control">
-        <label class="switch" onclick="handleDoctorShift(event)">
-            <input type="checkbox" id="doctor-shift-toggle" style="pointer-events: none;" {% if current_user.on_shift %}checked{% endif %}>
-            <span class="slider"></span>
-        </label>
+        {% if not current_user.on_shift %}
+        <form id="turn-on-form" action="/toggle_shift" method="POST" onsubmit="return handleTurnOn()">
+            <input type="hidden" name="on" value="true">
+            <input type="hidden" id="end-time-input" name="end_time">
+            <button type="submit" style="background:#4CAF50; color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer; font-size:16px;">Prender Guardia</button>
+        </form>
+        {% else %}
+        <form id="turn-off-form" action="/toggle_shift" method="POST" onsubmit="return handleTurnOff()">
+            <input type="hidden" name="on" value="false">
+            <button type="submit" style="background:#f44336; color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer; font-size:16px;">Apagar Guardia</button>
+        </form>
+        {% endif %}
         <label style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
         <span id="shift-end-label"></span>
     </div>
@@ -189,7 +197,7 @@
                 {% endfor %}
             </div>
         </div>
-        <h2>Consultas de Hoy <button onclick="location.reload()" style="background:#2196F3; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:14px;">🔄 Actualizar</button></h2>
+        <h2>Consultas de Hoy</h2>
         {% for consultation in today_consultations %}
         <div class="request-card" style="background-color: #e0f7e0;">
             <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
