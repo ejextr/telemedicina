@@ -253,8 +253,9 @@ def api_patients():
 def toggle_shift():
     if current_user.role != 'doctor':
         return jsonify({'error': 'Not a doctor'}), 403
-    data = request.get_json() or {}
-    on = data.get('on', not current_user.on_shift)
+    data = request.form
+    on_str = data.get('on')
+    on = on_str in ('true', 'True', '1')
     end_time_str = data.get('end_time')
     print(f"Toggle: user {current_user.id}, on={on}, end_time={end_time_str}")  # DEBUG
     if on:
@@ -267,14 +268,16 @@ def toggle_shift():
                 end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
                 current_user.shift_end_time = end_time
             except ValueError:
-                return jsonify({'error': 'Invalid end_time format (YYYY-MM-DDTHH:MM)'}), 400
+                flash('Formato de hora inválido (YYYY-MM-DDTHH:MM)')
+                return redirect(url_for('waiting_requests'))
     else:
         current_user.shift_end_time = None
     current_user.on_shift = on
     db.session.commit()
     end_str = current_user.shift_end_time.strftime('%H:%M') if current_user.shift_end_time else None
     print(f"Toggle success: on_shift={on}, end_time={end_str}")  # DEBUG
-    return jsonify({'on_shift': on, 'shift_end': end_str})
+    flash(f'Guardia {"prendida" if on else "apagada"}')
+    return redirect(url_for('waiting_requests'))
 
 @app.route('/api/doctor/shift_status')
 @login_required
