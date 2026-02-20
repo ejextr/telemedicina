@@ -98,123 +98,115 @@
                         {% if request.status in ['accepted', 'in_room'] %}
                         <button onclick="startDoctorVideo({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
                         {% endif %}
-                    </div>}
-                </div>for %}
+                    </div>
+                </div>
                 {% endif %}
-                {% endfor %}: 1;">
-            </div>3>Pendientes</h3>
-            <div style="flex: 1;"> %}
-                <h3>Pendientes</h3>ctive_requests %}
-                {% set counter = 0 %}== 'pending' %}
+                {% endfor %}
+            </div>
+            <div style="flex: 1;">
+                <h3>Pendientes</h3>
+                {% set counter = 0 %}
                 {% for request in active_requests %}
                 {% if request.status == 'pending' %}
-                {% set counter = counter + 1 %}: {{ request.patient.name or request.patient.username }}</h4>
-                <div class="request-card">t.symptoms }}</p>
+                {% set counter = counter + 1 %}
+                <div class="request-card">
                     <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
                     <p>Síntomas: {{ request.symptoms }}</p>
-                    <p>Estado: Pendiente</p>_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
-                    <div class="buttons">"submit" class="accept-button">Aceptar</button>
+                    <p>Estado: Pendiente</p>
+                    <div class="buttons">
                         <form action="{{ url_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
-                            <button type="submit" class="accept-button">Aceptar</button>thod="POST" style="display:inline;">
-                        </form>tton type="submit" class="reject-button">Rechazar</button>
+                            <button type="submit" class="accept-button">Aceptar</button>
+                        </form>
                         <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
                             <button type="submit" class="reject-button">Rechazar</button>
-                        </form>ction="{{ url_for('enable_chat', id=request.id) }}" method="POST" style="display:inline;">
-                        {% if not request.chat_enabled %}background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>
+                        </form>
+                        {% if not request.chat_enabled %}
                         <form action="{{ url_for('enable_chat', id=request.id) }}" method="POST" style="display:inline;">
                             <button type="submit" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>
                         </form>
                         {% endif %}
-                    </div>}
-                </div>for %}
+                    </div>
+                </div>
                 {% endif %}
                 {% endfor %}
             </div>
-        </div>nsultas de Hoy</h2>
+        </div>
+        <h2>Consultas de Hoy</h2>
         {% for consultation in today_consultations %}
-        <h2>Consultas de Hoy</h2> style="background-color: #e0f7e0;">
-        {% for consultation in today_consultations %}e or consultation.patient.username }}</h4>
         <div class="request-card" style="background-color: #e0f7e0;">
-            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>else 'N/A' }}</p>
+            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
             <p>Síntomas: {{ consultation.symptoms }}</p>
             <p>Finalizada: {{ consultation.end_time.strftime('%H:%M') if consultation.end_time else 'N/A' }}</p>
         </div>
-        {% endfor %}l de Consultas</h2>
+        {% endfor %}
+        <h2>Historial de Consultas</h2>
         {% for consultation in history_consultations %}
-        <h2>Historial de Consultas</h2>="background-color: #f0f0f0;">
-        {% for consultation in history_consultations %}or consultation.patient.username }}</h4>
         <div class="request-card" style="background-color: #f0f0f0;">
-            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>ime else 'N/A' }}</p>
+            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
             <p>Síntomas: {{ consultation.symptoms }}</p>
             <p>Fecha: {{ consultation.end_time.strftime('%d/%m/%Y %H:%M') if consultation.end_time else 'N/A' }}</p>
         </div>
         {% endfor %}
-    </div>nction toggleMenu() {
-document.getElementById('menu').classList.toggle('open');
+    </div>
     <script>
         function toggleMenu() {
-            document.getElementById('menu').classList.toggle('open');unction moveUp(id) {
-        }            fetch(`/move_up/${id}`, { method: 'POST' })
-e => response.json())
+            document.getElementById('menu').classList.toggle('open');
+        }
         function moveUp(id) {
             fetch(`/move_up/${id}`, { method: 'POST' })
-                .then(response => response.json())n.reload();
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         location.reload();
                     }
-                });unction moveDown(id) {
-        }            fetch(`/move_down/${id}`, { method: 'POST' })
-=> response.json())
+                });
+        }
         function moveDown(id) {
             fetch(`/move_down/${id}`, { method: 'POST' })
-                .then(response => response.json())n.reload();
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         location.reload();
                     }
-                });et lastUnread = 0;
-        }        function playNotificationSound() {
-ext = new (window.AudioContext || window.webkitAudioContext)();
-        let lastUnread = 0;t.createOscillator();
+                });
+        }
+        let lastUnread = 0;
         function playNotificationSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();800;
+            const gainNode = audioContext.createGain();
             oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination); audioContext.currentTime);
-            oscillator.frequency.value = 800;xt.currentTime);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
             oscillator.type = 'square';
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);unction updateUnreadBadge() {
-        }            fetch('/api/unread_count')
-
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
         function updateUnreadBadge() {
-            fetch('/api/unread_count')ead count:', data.unread);
-                .then(r => r.json()) = document.getElementById('unread-badge');
+            fetch('/api/unread_count')
+                .then(r => r.json())
                 .then(data => {
-                    console.log('Unread count:', data.unread);a.unread;
-                    const badge = document.getElementById('unread-badge');y = 'inline';
+                    console.log('Unread count:', data.unread);
+                    const badge = document.getElementById('unread-badge');
                     if (data.unread > 0) {
                         badge.textContent = data.unread > 99 ? '99+' : data.unread;
                         badge.style.display = 'inline';
                         if (data.unread > lastUnread) {
-                            playNotificationSound();adge.style.display = 'none';
+                            playNotificationSound();
                         }
                     } else {
-                        badge.style.display = 'none';tch(e => console.log('Unread polling error', e));
+                        badge.style.display = 'none';
                     }
                     lastUnread = data.unread;
-                }).catch(e => console.log('Unread polling error', e));pdateUnreadBadge();
+                }).catch(e => console.log('Unread polling error', e));
         }
         setInterval(updateUnreadBadge, 3000);
-        updateUnreadBadge();    </script>
-
+        updateUnreadBadge();
+    </script>
     <script>
         const currentUserId = {{ current_user.id }};
         let jitsiApi = null;
-
         function startDoctorVideo(patientId) {
             fetch(`/api/start_video_call/${patientId}`, {method: 'POST'})
                 .then(r => r.json())
@@ -226,7 +218,6 @@ ext = new (window.AudioContext || window.webkitAudioContext)();
                     }
                 }).catch(e => console.log(e));
         }
-
         function initJitsi(room) {
             const domain = 'meet.jit.si';
             const options = {
@@ -241,7 +232,6 @@ ext = new (window.AudioContext || window.webkitAudioContext)();
             jitsiApi = new JitsiMeetExternalAPI(domain, options);
             document.getElementById('jitsiModal').style.display = 'block';
         }
-
         function closeJitsiModal() {
             if (jitsiApi) {
                 jitsiApi.dispose();
@@ -250,7 +240,6 @@ ext = new (window.AudioContext || window.webkitAudioContext)();
             document.getElementById('jitsiModal').style.display = 'none';
         }
     </script>
-
     <div id="jitsiModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.9);">
         <div style="position:absolute; top:10px; right:10px;">
             <span class="close" onclick="closeJitsiModal()" style="color:white; font-size:30px; cursor:pointer;">&times;</span>
