@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitudes de Sala de Espera - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://meet.jit.si/external_api.js"></script>
+    <style>
+        .request-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: var(--shadow);
+            user-select: none;
+            cursor: grab;
+        }
+        .request-card:active {
+            cursor: grabbing;
+        }
+        .badge {
+            background-color: #f44336;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .request-card h3 {
+            color: var(--primary);
+        }
+        .buttons {
+            margin-top: 10px;
+        }
+        .accept-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .reject-button {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .shift-control {
+            padding: 20px;
+            background: var(--card);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            {% if current_user.role == 'patient' %}
+            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            {% endif %}
+            {% if current_user.role == 'doctor' %}
+            <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('messages') }}">Mensajes<span id="unread-badge" class="badge" style="display:none;"></span></a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+    </div>
+    <div class="header">
+        <h1>Medic-App - Gestión de Consultas</h1>
+    </div>
+    <div class="shift-control">
+        <label class="switch">
+            <input type="checkbox" id="doctor-shift-toggle" onclick="handleDoctorShift(event)" {% if current_user.on_shift %}checked{% endif %}>
+            <span class="slider"></span>
+        </label>
+        <label style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
+        <span id="shift-end-label"></span>
+    </div>
+    <div style="padding: 20px;">
+        <h2>Salas de Espera Activas</h2>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h3>Aceptadas / En Sala</h3>
+                {% set counter = 0 %}
+                {% for request in active_requests %}
+                {% if request.status in ['accepted', 'in_room'] %}
+                {% set counter = counter + 1 %}
+                <div class="request-card">
+                    <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
+                    <p>Síntomas: {{ request.symptoms }}</p>
+                    <p>Estado: {% if request.status == 'accepted' %}Aceptado{% elif request.status == 'in_room' %}En Sala Virtual{% endif %}</p>
+                    <div class="buttons">
+                        {% if request.chat_enabled %}
+                        <a href="{{ url_for('chat', user_id=request.patient_id) }}" target="_blank" style="margin-right: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Mensajes</button></a>
+                        {% else %}
+                        <form action="{{ url_for('enable_chat', id=request.id) }}" method="POST" style="display:inline; margin-right: 10px;">
+                            <button type="submit" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>
+                        </form>
+                        {% endif %}
+                        <button onclick="moveUp({{ request.id }})" style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">↑</button>
+                        <button onclick="moveDown({{ request.id }})" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px;">↓</button>
+                        {% if request.status in ['accepted', 'in_room'] %}
+                        <button onclick="startDoctorVideo({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <div style="flex: 1;">
+                <h3>Pendientes</h3>
+                {% set counter = 0 %}
+                {% for request in active_requests %}
+                {% if request.status == 'pending' %}
+                {% set counter = counter + 1 %}
+                <div class="request-card">
+                    <h4>{{ counter }}. Paciente: {{ request.patient.name or request.patient.username }}</h4>
+                    <p>Síntomas: {{ request.symptoms }}</p>
+                    <p>Estado: Pendiente</p>
+                    <div class="buttons">
+                        <form action="{{ url_for('accept_waiting', id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="accept-button">Aceptar</button>
+                        </form>
+                        <form action="{{ url_for('reject_waiting', id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="reject-button">Rechazar</button>
+                        </form>
+                        {% if not request.chat_enabled %}
+                        <form action="{{ url_for('enable_chat', id=request.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <h2>Consultas de Hoy</h2>
+        {% for consultation in today_consultations %}
+        <div class="request-card" style="background-color: #e0f7e0;">
+            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
+            <p>Síntomas: {{ consultation.symptoms }}</p>
+            <p>Finalizada: {{ consultation.end_time.strftime('%H:%M') if consultation.end_time else 'N/A' }}</p>
+        </div>
+        {% endfor %}
+        <h2>Historial de Consultas</h2>
+        {% for consultation in history_consultations %}
+        <div class="request-card" style="background-color: #f0f0f0;">
+            <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
+            <p>Síntomas: {{ consultation.symptoms }}</p>
+            <p>Fecha: {{ consultation.end_time.strftime('%d/%m/%Y %H:%M') if consultation.end_time else 'N/A' }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+        function moveUp(id) {
+            fetch(`/move_up/${id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+        function moveDown(id) {
+            fetch(`/move_down/${id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+        let lastUnread = 0;
+        function playNotificationSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+        function updateUnreadBadge() {
+            fetch('/api/unread_count')
+                .then(r => r.json())
+                .then(data => {
+                    console.log('Unread count:', data.unread);
+                    const badge = document.getElementById('unread-badge');
+                    if (data.unread > 0) {
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                        badge.style.display = 'inline';
+                        if (data.unread > lastUnread) {
+                            playNotificationSound();
+                        }
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                    lastUnread = data.unread;
+                }).catch(e => console.log('Unread polling error', e));
+        }
+        setInterval(updateUnreadBadge, 3000);
+
+        async function handleDoctorShift(event) {
+            event.preventDefault();
+            alert('Toggle clicked!'); // DEBUG
+            const toggle = document.getElementById('doctor-shift-toggle');
+            const currentChecked = toggle.checked;
+            let newChecked = !currentChecked; // Toggle the state
+            let endTime = null;
+
+            if (newChecked) {
+                // Turning ON: ask for end time
+                const now = new Date();
+                const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000); // +8h
+                const defaultStr = defaultEnd.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+                endTime = prompt('Ingresa hora de fin de guardia (YYYY-MM-DDTHH:MM):', defaultStr);
+                if (!endTime) {
+                    // Cancel, stay off
+                    return;
+                }
+            } else {
+                // Turning OFF: confirm
+                if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
+                    // Cancel, stay on
+                    return;
+                }
+            }
+
+            const body = {on: newChecked, end_time: endTime};
+            try {
+                const res = await fetch('/toggle_shift', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                toggle.checked = newChecked;
+                updateShiftDisplay();
+            } catch(e) {
+                console.error(e);
+                alert('Error al actualizar guardia');
+            }
+        }
+
+        async function updateShiftDisplay() {
+            try {
+                const res = await fetch('/api/doctor/shift_status');
+                const data = await res.json();
+                const label = document.getElementById('shift-end-label');
+                if (data.on_shift && data.end_time) {
+                    const end = new Date(data.end_time);
+                    label.textContent = ` (hasta ${end.toLocaleString()})`;
+                } else {
+                    label.textContent = '';
+                }
+            } catch(e) {
+                console.error('Error updating shift display', e);
+            }
+        }
+
+        // Initialize shift display on load
+        updateShiftDisplay();
+        console.log('JS waiting_requests loaded');
+        updateUnreadBadge();
+    </script>
+    <script>
+        const currentUserId = {{ current_user.id }};
+        let jitsiApi = null;
+        function startDoctorVideo(patientId) {
+            fetch(`/api/start_video_call/${patientId}`, {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    if (data.room) {
+                        initJitsi(data.room);
+                    } else {
+                        alert('Error al iniciar videollamada');
+                    }
+                }).catch(e => console.log(e));
+        }
+        function initJitsi(room) {
+            const domain = 'meet.jit.si';
+            const options = {
+                roomName: room,
+                width: '100%',
+                height: '100%',
+                parentNode: document.querySelector('#jitsiContainer'),
+                userInfo: {
+                    displayName: '{{ current_user.name or current_user.username }}'
+                },
+                configOverwrite: {
+                    disableDeepLinking: true,
+                    prejoinPageEnabled: false,
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    enableWelcomePage: false,
+                    enableClosePage: false,
+                    disableInviteFunctions: true
+                },
+                interfaceConfigOverwrite: {
+                    DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false,
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'desktop', 'fullscreen',
+                        'fodeviceselection', 'hangup', 'profile', 'chat',
+                        'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                        'videoquality', 'filmstrip', 'feedback', 'stats',
+                        'shortcuts', 'tileview', 'videobackgroundblur',
+                        'download', 'help', 'mute-everyone'
+                    ]
+                }
+            };
+            jitsiApi = new JitsiMeetExternalAPI(domain, options);
+            jitsiApi.addEventListener('videoConferenceJoined', () => {
+                console.log('Videollamada iniciada');
+                fetch('/api/call_started', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room: room, user_id: currentUserId})
+                });
+            });
+            jitsiApi.addEventListener('videoConferenceLeft', () => {
+                console.log('Videollamada terminada');
+                fetch('/api/call_ended', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room: room, user_id: currentUserId})
+                });
+                closeVideo();
+            });
+            document.getElementById('videoContainer').style.display = 'block';
+        }
+        function closeVideo() {
+            if (jitsiApi) {
+                jitsiApi.dispose();
+                jitsiApi = null;
+            }
+            document.getElementById('videoContainer').style.display = 'none';
+        }
+    </script>
+    <div id="videoContainer" style="display:none; position:fixed; bottom:10px; right:10px; width:400px; height:300px; border:2px solid #ccc; background:white; z-index:1000; border-radius:8px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+        <div style="background:#f0f0f0; padding:5px; border-bottom:1px solid #ccc; display:flex; justify-content:space-between; align-items:center;">
+            <span>Videollamada</span>
+            <button onclick="closeVideo()" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+        <div id="jitsiContainer" style="height:calc(100% - 40px); width:100%;"></div>
+    </div>
+</body>
+</html>
