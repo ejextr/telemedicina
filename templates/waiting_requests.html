@@ -129,7 +129,7 @@
         <span id="shift-end-label"></span>
     </div>
     <div style="padding: 20px;">
-        <h2>Salas de Espera Activas</h2>
+        <h2>Salas de Espera Activas <button onclick="location.reload()" style="background:#4CAF50; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:14px;">🔄 Actualizar</button></h2>
         <div style="display: flex; gap: 20px;">
             <div style="flex: 1;">
                 <h3>Aceptadas / En Sala</h3>
@@ -161,6 +161,7 @@
                 {% endfor %}
             </div>
             <div style="flex: 1;">
+                <div id="pending-section">
                 <h3>Pendientes</h3>
                 {% set counter = 0 %}
                 {% for request in active_requests %}
