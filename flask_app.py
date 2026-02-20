@@ -258,12 +258,15 @@ def toggle_shift():
     end_time_str = data.get('end_time')
     if on:
         if not end_time_str:
-            return jsonify({'error': 'end_time required when turning on'}), 400
-        try:
-            end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+            # Default: current time + 8 hours
+            end_time = datetime.utcnow() + timedelta(hours=8)
             current_user.shift_end_time = end_time
-        except ValueError:
-            return jsonify({'error': 'Invalid end_time format (YYYY-MM-DDTHH:MM)'}), 400
+        else:
+            try:
+                end_time = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+                current_user.shift_end_time = end_time
+            except ValueError:
+                return jsonify({'error': 'Invalid end_time format (YYYY-MM-DDTHH:MM)'}), 400
     else:
         current_user.shift_end_time = None
     current_user.on_shift = on
