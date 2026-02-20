@@ -189,7 +189,7 @@
                 {% endfor %}
             </div>
         </div>
-        <h2>Consultas de Hoy</h2>
+        <h2>Consultas de Hoy <button onclick="location.reload()" style="background:#2196F3; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:14px;">🔄 Actualizar</button></h2>
         {% for consultation in today_consultations %}
         <div class="request-card" style="background-color: #e0f7e0;">
             <h4>Paciente: {{ consultation.patient.name or consultation.patient.username }}</h4>
