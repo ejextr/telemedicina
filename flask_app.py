@@ -110,13 +110,69 @@ class Feedback(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    try:
+        return User.query.get(int(user_id))
+    except Exception as e:
+        if 'no such table' in str(e) or 'no such column' in str(e):
+            with app.app_context():
+                db.create_all()
+                try:
+                    db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+                    db.session.commit()
+                except:
+                    pass
+                try:
+                    db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
+                    db.session.commit()
+                except:
+                    pass
+                if User.query.count() == 0:
+                    from werkzeug.security import generate_password_hash
+                    users = [
+                        User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', specialty='General', on_shift=False, shift_end_time=None),
+                        User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', specialty='Cardiología', on_shift=True, shift_end_time=None),
+                        User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', on_shift=False, shift_end_time=None)
+                    ]
+                    for u in users:
+                        db.session.add(u)
+                    db.session.commit()
+            return None
+        raise e
 
 @app.route('/')
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    retutry:
+            user = User.query.filter_by(username=username).first()
+        except Exception as e:
+            if 'no such table' in str(e) or 'no such column' in str(e):
+                with app.app_context():
+                    db.create_all()
+                    # same migrations/users as above
+                    try:
+                        db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+                        db.session.commit()
+                    except:
+                        pass
+                    try:
+                        db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
+                        db.session.commit()
+                    except:
+                        pass
+                    if User.query.count() == 0:
+                        from werkzeug.security import generate_password_hash
+                        users = [
+                            User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', specialty='General', on_shift=False, shift_end_time=None),
+                            User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', specialty='Cardiología', on_shift=True, shift_end_time=None),
+                            User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', on_shift=False, shift_end_time=None)
+                        ]
+                        for u in users:
+                            db.session.add(u)
+                        db.session.commit()
+                flash('DB auto-initialized. Intenta login again.')
+                return render_template('login.html')
+            raise e
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
