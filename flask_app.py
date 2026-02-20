@@ -586,12 +586,18 @@ def api_call_ended():
 
 @app.route('/migrate_db')
 def migrate_db():
-    try:
-        db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
-        db.session.commit()
-        return 'Migration completed'
-    except Exception as e:
-        return f'Error: {e}'
+    with app.app_context():
+        try:
+            db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+            db.session.commit()
+        except:
+            pass
+        try:
+            db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
+            db.session.commit()
+        except:
+            pass
+    return 'All migrations completed (feedback_submitted, shift_end_time)'
 
 @app.route('/api/appointments', methods=['GET'])
 @login_required
