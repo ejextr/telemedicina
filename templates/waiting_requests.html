@@ -133,6 +133,7 @@
         <div style="display: flex; gap: 20px;">
             <div style="flex: 1;">
                 <h3>Aceptadas / En Sala</h3>
+                <div id="active-section">
                 {% set counter = 0 %}
                 {% for request in active_requests %}
                 {% if request.status in ['accepted', 'in_room'] %}
