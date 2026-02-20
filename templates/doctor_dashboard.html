@@ -85,9 +85,11 @@
         }
         let lastWaitingCount = 0;
         async function loadDoctorInfo() {
+            console.log('Loading doctor info...');
             try {
                 const shiftRes = await fetch('/api/doctor/shift_status');
                 const shift = await shiftRes.json();
+                console.log('Shift status:', shift);
                 const statusEl = document.getElementById('shift-status');
                 if (shift.on_shift) {
                     statusEl.innerHTML = `<span style="color: green;">ON</span> hasta ${shift.shift_end_display || 'N/A'}`;
@@ -101,9 +103,11 @@
             try {
                 const waitRes = await fetch('/api/doctor/waiting_count');
                 const wait = await waitRes.json();
+                console.log('Waiting count:', wait.pending, 'last:', lastWaitingCount);
                 document.getElementById('waiting-count').textContent = wait.pending;
                 document.getElementById('waiting-count-turnos').textContent = wait.pending;
                 if (wait.pending > lastWaitingCount) {
+                    console.log('New patient! Playing sound');
                     playNotificationSound(); // Alert for new waiting patient
                 }
                 lastWaitingCount = wait.pending;

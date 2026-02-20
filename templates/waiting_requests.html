@@ -238,10 +238,12 @@
                     }
          
         function endConsultation(id) {
+            alert('End consultation called for ' + id);
             if (confirm('¿Finalizar consulta? Esto cerrará la sesión.')) {
                 fetch(`/end_consultation/${id}`, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
+                        alert('Response: ' + JSON.stringify(data));
                         if (data.success) {
                             alert('Consulta finalizada exitosamente');
                             location.reload();
@@ -250,7 +252,7 @@
                         }
                     }).catch(e => {
                         console.error(e);
-                        alert('Error de conexión');
+                        alert('Error de conexión: ' + e.message);
                     });
             }
         }       });
