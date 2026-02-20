@@ -122,8 +122,8 @@
     </div>
     <div class="shift-control">
         <label class="switch">
-            <input type="checkbox" id="doctor-shift-toggle" onclick="handleDoctorShift(event)" {% if current_user.on_shift %}checked{% endif %}>
-            <span class="slider"></span>
+            <input type="checkbox" id="doctor-shift-toggle" style="pointer-events: none;" {% if current_user.on_shift %}checked{% endif %}>
+            <span class="slider" onclick="handleDoctorShift(event)"></span>
         </label>
         <label style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
         <span id="shift-end-label"></span>
@@ -261,7 +261,7 @@
 
         async function handleDoctorShift(event) {
             event.preventDefault();
-            alert('Toggle clicked!'); // DEBUG
+            console.log('Toggle clicked'); // DEBUG
             const toggle = document.getElementById('doctor-shift-toggle');
             const currentChecked = toggle.checked;
             let newChecked = !currentChecked; // Toggle the state
