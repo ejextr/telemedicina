@@ -256,6 +256,7 @@ def toggle_shift():
     data = request.get_json() or {}
     on = data.get('on', not current_user.on_shift)
     end_time_str = data.get('end_time')
+    print(f"Toggle: user {current_user.id}, on={on}, end_time={end_time_str}")  # DEBUG
     if on:
         if not end_time_str:
             # Default: current time + 8 hours
@@ -272,6 +273,7 @@ def toggle_shift():
     current_user.on_shift = on
     db.session.commit()
     end_str = current_user.shift_end_time.strftime('%H:%M') if current_user.shift_end_time else None
+    print(f"Toggle success: on_shift={on}, end_time={end_str}")  # DEBUG
     return jsonify({'on_shift': on, 'shift_end': end_str})
 
 @app.route('/api/doctor/shift_status')

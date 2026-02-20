@@ -121,15 +121,15 @@
         <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div class="shift-control">
-        <label class="switch">
+        <label class="switch" onclick="handleDoctorShift(event)">
             <input type="checkbox" id="doctor-shift-toggle" style="pointer-events: none;" {% if current_user.on_shift %}checked{% endif %}>
-            <span class="slider" onclick="handleDoctorShift(event)"></span>
+            <span class="slider"></span>
         </label>
         <label style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
         <span id="shift-end-label"></span>
     </div>
     <div style="padding: 20px;">
-        <h2>Salas de Espera Activas <button onclick="location.reload()" style="background:#4CAF50; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:14px;">🔄 Actualizar</button></h2>
+        <h2>Salas de Espera Activas</h2>
         <div style="display: flex; gap: 20px;">
             <div style="flex: 1;">
                 <h3>Aceptadas / En Sala</h3>
@@ -263,13 +263,14 @@
 
         async function handleDoctorShift(event) {
             event.stopPropagation();
-            console.log('Toggle clicked, current:', toggle.checked); // DEBUG
+            alert('Toggle clicked, current: ' + toggle.checked); // DEBUG
             const toggle = document.getElementById('doctor-shift-toggle');
             const currentChecked = toggle.checked;
             let endTime = null;
             let newChecked;
 
             if (!currentChecked) {
+                alert('OFF → prender: prompt'); // DEBUG
                 // OFF → prender: prompt hora
                 const now = new Date();
                 const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
@@ -280,6 +281,7 @@
                 }
                 newChecked = true;
             } else {
+                alert('ON → apagar: confirm'); // DEBUG
                 // ON → apagar: confirm
                 if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
                     return;
@@ -287,6 +289,7 @@
                 newChecked = false;
             }
 
+            alert('POST: on=' + newChecked + ', end_time=' + endTime); // DEBUG
             const body = {on: newChecked, end_time: endTime};
             try {
                 const res = await fetch('/toggle_shift', {
@@ -301,6 +304,7 @@
                 }
                 toggle.checked = newChecked;
                 updateShiftDisplay();
+                alert('Success: toggle set to ' + newChecked); // DEBUG
             } catch(e) {
                 console.error(e);
                 alert('Error al actualizar guardia');
