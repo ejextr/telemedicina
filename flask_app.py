@@ -539,6 +539,26 @@ def api_room_name(user_id):
     room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
     return jsonify({'room': room_name})
 
+@app.route('/api/call_started', methods=['POST'])
+@login_required
+def api_call_started():
+    data = request.get_json()
+    room = data.get('room')
+    user_id = data.get('user_id')
+    print(f"Call started: room={room}, user_id={user_id}")
+    # Aquí puedes agregar lógica para registrar el inicio de la llamada
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/call_ended', methods=['POST'])
+@login_required
+def api_call_ended():
+    data = request.get_json()
+    room = data.get('room')
+    user_id = data.get('user_id')
+    print(f"Call ended: room={room}, user_id={user_id}")
+    # Aquí puedes agregar lógica para registrar el fin de la llamada
+    return jsonify({'status': 'ok'})
+
 @app.route('/migrate_db')
 def migrate_db():
     try:

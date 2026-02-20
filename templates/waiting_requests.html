@@ -227,9 +227,48 @@
                 parentNode: document.querySelector('#jitsiContainer'),
                 userInfo: {
                     displayName: '{{ current_user.name or current_user.username }}'
+                },
+                configOverwrite: {
+                    disableDeepLinking: true,
+                    prejoinPageEnabled: false,
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    enableWelcomePage: false,
+                    enableClosePage: false,
+                    disableInviteFunctions: true
+                },
+                interfaceConfigOverwrite: {
+                    DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false,
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'desktop', 'fullscreen',
+                        'fodeviceselection', 'hangup', 'profile', 'chat',
+                        'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                        'videoquality', 'filmstrip', 'feedback', 'stats',
+                        'shortcuts', 'tileview', 'videobackgroundblur',
+                        'download', 'help', 'mute-everyone'
+                    ]
                 }
             };
             jitsiApi = new JitsiMeetExternalAPI(domain, options);
+            jitsiApi.addEventListener('videoConferenceJoined', () => {
+                console.log('Videollamada iniciada');
+                fetch('/api/call_started', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room: room, user_id: currentUserId})
+                });
+            });
+            jitsiApi.addEventListener('videoConferenceLeft', () => {
+                console.log('Videollamada terminada');
+                fetch('/api/call_ended', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room: room, user_id: currentUserId})
+                });
+                closeVideo();
+            });
             document.getElementById('videoContainer').style.display = 'block';
         }
         function closeVideo() {
