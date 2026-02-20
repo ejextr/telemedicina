@@ -175,6 +175,7 @@
             <div class="chat-header">
                 <button onclick="closeChat()" style="background:none; border:none; font-size:24px; cursor:pointer;">←</button>
                 <h2 id="chat-title"></h2>
+                <button onclick="startVideoCall()" style="background:#FF9800; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">📞 Videollamada</button>
             </div>
             <div class="messages" id="messages"></div>
             <form class="message-form" id="message-form" onsubmit="sendMessage(event)">
@@ -386,7 +387,14 @@
             event.preventDefault();
             const input = document.getElementById('message-input');
             const content = input.value.trim();
-            if (!content || !currentChatUserId) return;
+            if (!content) {
+                alert('Escribe un mensaje primero.');
+                return;
+            }
+            if (!currentChatUserId) {
+                alert('Selecciona una conversación primero.');
+                return;
+            }
             try {
                 const res = await fetch('/send_message', {
                     method: 'POST',
@@ -396,10 +404,32 @@
                 if (res.ok) {
                     input.value = '';
                     loadMessages(); // Refresh immediately
+                } else {
+                    alert('Error al enviar mensaje.');
                 }
             } catch(e) {
                 console.error('Send message error:', e);
+                alert('Error de conexión.');
             }
+        }
+
+        function startVideoCall() {
+            if (!currentChatUserId) {
+                alert('Selecciona una conversación primero.');
+                return;
+            }
+            fetch(`/api/start_video_call/${currentChatUserId}`, {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    if (data.room) {
+                        initJitsi(data.room);
+                    } else {
+                        alert('Error al iniciar videollamada');
+                    }
+                }).catch(e => {
+                    console.log(e);
+                    alert('Error al iniciar videollamada');
+                });
         }
     </script>
 </body>
