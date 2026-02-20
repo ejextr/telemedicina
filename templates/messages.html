@@ -15,6 +15,40 @@
             font-size: 12px;
             margin-left: 5px;
         }
+        .conversation {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .conversation:hover {
+            background-color: #f5f5f5;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .details {
+            flex: 1;
+        }
+        .name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .last-message {
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -37,28 +71,19 @@
         <h1>Medic-App - Mensajes</h1>
     </div>
     <div style="padding: 20px;">
-        {% if current_user.role == 'doctor' %}
-            <h2>Pacientes en Sala Virtual</h2>
+        <h2>Conversaciones Activas</h2>
+        {% if waitings %}
             {% for waiting in waitings %}
-            <div style="margin: 10px 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
-                <p>Paciente: {{ waiting.patient.name }}</p>
-                <a href="{{ url_for('chat', user_id=waiting.patient_id) }}" target="_blank">Chatear</a>
+            <div class="conversation" onclick="window.location.href='{{ url_for('chat', user_id=waiting.patient_id if current_user.role == 'doctor' else waiting.doctor_id) }}'">
+                <div class="avatar">{{ (waiting.patient.name[0] if current_user.role == 'doctor' else waiting.doctor.name[0]).upper() }}</div>
+                <div class="details">
+                    <div class="name">{{ waiting.patient.name if current_user.role == 'doctor' else waiting.doctor.name }}</div>
+                    <div class="last-message">Toca para chatear</div>
+                </div>
             </div>
             {% endfor %}
-            {% if not waitings %}
-            <p>No hay pacientes en sala virtual.</p>
-            {% endif %}
-        {% elif current_user.role == 'patient' %}
-            <h2>Doctores en Sala Virtual</h2>
-            {% for waiting in waitings %}
-            <div style="margin: 10px 0; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
-                <p>Doctor: {{ waiting.doctor.name }}</p>
-                <a href="{{ url_for('chat', user_id=waiting.doctor_id) }}" target="_blank">Chatear</a>
-            </div>
-            {% endfor %}
-            {% if not waitings %}
-            <p>No tienes consultas activas.</p>
-            {% endif %}
+        {% else %}
+            <p>No hay conversaciones activas.</p>
         {% endif %}
     </div>
     <script>
