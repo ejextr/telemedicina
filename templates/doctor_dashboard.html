@@ -83,6 +83,7 @@
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
+        let lastWaitingCount = 0;
         async function loadDoctorInfo() {
             try {
                 const shiftRes = await fetch('/api/doctor/shift_status');
@@ -102,6 +103,10 @@
                 const wait = await waitRes.json();
                 document.getElementById('waiting-count').textContent = wait.pending;
                 document.getElementById('waiting-count-turnos').textContent = wait.pending;
+                if (wait.pending > lastWaitingCount) {
+                    playNotificationSound(); // Alert for new waiting patient
+                }
+                lastWaitingCount = wait.pending;
             } catch(e) {
                 console.error('Waiting count error:', e);
                 document.getElementById('waiting-count').textContent = 'Error';
@@ -118,7 +123,7 @@
         }
         loadDoctorInfo();
         console.log('JS dashboard loaded');
-        setInterval(loadDoctorInfo, 5000); // Update every 5s
+        setInterval(loadDoctorInfo, 2000); // Update every 2s for real-time
     </script>
 </body>
 </html>
