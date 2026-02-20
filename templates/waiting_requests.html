@@ -262,6 +262,13 @@
                 });
         }
 
+        function enableChat(id) {
+            fetch(`/enable_chat/${id}`, { method: 'POST' })
+                .then(() => {
+                    updateWaitingRequests(); // Refresh the list
+                });
+        }
+
         function endConsultation(id) {
             if (confirm('¿Finalizar consulta? Esto cerrará la sesión.')) {
                 fetch(`/end_consultation/${id}`, { method: 'POST' })
@@ -362,13 +369,17 @@
                 // Update pending
                 let pendingHtml = '';
                 requests.pending.forEach(r => {
+                    let buttons = `<button class="accept-button" onclick="acceptRequest(${r.id})">Aceptar</button>
+                                <button class="reject-button" onclick="rejectRequest(${r.id})">Rechazar</button>`;
+                    if (!r.chat_enabled) {
+                        buttons += `<button onclick="enableChat(${r.id})" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>`;
+                    }
                     pendingHtml += `
                         <div class="request-card">
                             <h3>${r.patient_name}</h3>
                             <p>${r.symptoms}</p>
                             <div class="buttons">
-                                <button class="accept-button" onclick="acceptRequest(${r.id})">Aceptar</button>
-                                <button class="reject-button" onclick="rejectRequest(${r.id})">Rechazar</button>
+                                ${buttons}
                             </div>
                         </div>`;
                 });
@@ -377,13 +388,17 @@
                 // Update active
                 let activeHtml = '';
                 requests.accepted.forEach(r => {
+                    let buttons = `<button onclick="startDoctorVideo(${r.patient_id})">Videollamada</button>
+                                <button class="reject-button" onclick="endConsultation(${r.id})">Finalizar</button>`;
+                    if (!r.chat_enabled) {
+                        buttons += `<button onclick="enableChat(${r.id})" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>`;
+                    }
                     activeHtml += `
                         <div class="request-card">
                             <h3>${r.patient_name}</h3>
                             <p>${r.symptoms}</p>
                             <div class="buttons">
-                                <button onclick="startDoctorVideo(${r.patient_id})">Videollamada</button>
-                                <button class="reject-button" onclick="endConsultation(${r.id})">Finalizar</button>
+                                ${buttons}
                             </div>
                         </div>`;
                 });

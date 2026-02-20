@@ -639,8 +639,8 @@ def api_waiting_requests():
     pending = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='pending').order_by(WaitingRoom.queue_order).all()
     accepted = WaitingRoom.query.filter_by(doctor_id=current_user.id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).order_by(WaitingRoom.queue_order).all()
     return jsonify({
-        'pending': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'symptoms': w.symptoms} for w in pending],
-        'accepted': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'status': w.status} for w in accepted]
+        'pending': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'symptoms': w.symptoms, 'chat_enabled': w.chat_enabled} for w in pending],
+        'accepted': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'status': w.status, 'chat_enabled': w.chat_enabled} for w in accepted]
     })
 
 @app.route('/api/chat_messages/<int:user_id>')
