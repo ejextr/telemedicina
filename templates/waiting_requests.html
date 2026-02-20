@@ -122,11 +122,10 @@
     </div>
     <div class="shift-control">
         <label class="switch">
-            <input type="checkbox" id="doctor-shift-toggle" onchange="handleDoctorShift()">
+            <input type="checkbox" id="doctor-shift-toggle" onchange="handleDoctorShift()" {% if current_user.on_shift %}checked{% endif %}>
             <span class="slider"></span>
         </label>
         <label for="doctor-shift-toggle" style="font-weight: bold; font-size: 18px; margin: 0;">Guardia</label>
-        <input type="datetime-local" id="shift-end-time" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 4px;">
         <span id="shift-end-label"></span>
     </div>
     <div style="padding: 20px;">
@@ -259,6 +258,69 @@
                 }).catch(e => console.log('Unread polling error', e));
         }
         setInterval(updateUnreadBadge, 3000);
+
+        async function handleDoctorShift() {
+            const toggle = document.getElementById('doctor-shift-toggle');
+            const checked = toggle.checked;
+            let endTime = null;
+
+            if (checked) {
+                // Turning ON: ask for end time
+                const now = new Date();
+                const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000); // +8h
+                const defaultStr = defaultEnd.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+                endTime = prompt('Ingresa hora de fin de guardia (YYYY-MM-DDTHH:MM):', defaultStr);
+                if (!endTime) {
+                    toggle.checked = false;
+                    return;
+                }
+            } else {
+                // Turning OFF: confirm
+                if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
+                    toggle.checked = true;
+                    return;
+                }
+            }
+
+            const body = {on: checked, end_time: endTime};
+            try {
+                const res = await fetch('/toggle_shift', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.error) {
+                    alert(data.error);
+                    toggle.checked = !checked;
+                    return;
+                }
+                updateShiftDisplay();
+            } catch(e) {
+                console.error(e);
+                alert('Error al actualizar guardia');
+                toggle.checked = !checked;
+            }
+        }
+
+        async function updateShiftDisplay() {
+            try {
+                const res = await fetch('/api/doctor/shift_status');
+                const data = await res.json();
+                const label = document.getElementById('shift-end-label');
+                if (data.on_shift && data.end_time) {
+                    const end = new Date(data.end_time);
+                    label.textContent = ` (hasta ${end.toLocaleString()})`;
+                } else {
+                    label.textContent = '';
+                }
+            } catch(e) {
+                console.error('Error updating shift display', e);
+            }
+        }
+
+        // Initialize shift display on load
+        updateShiftDisplay();
         updateUnreadBadge();
     </script>
     <script>
