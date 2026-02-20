@@ -219,6 +219,11 @@
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
         }
+
+        // Real-time updates for waiting requests
+        setInterval(() => {
+            location.reload();
+        }, 5000); // Reload every 5 seconds
         function moveUp(id) {
             fetch(`/move_up/${id}`, { method: 'POST' })
                 .then(response => response.json())
@@ -237,12 +242,10 @@
                     }
          
         function endConsultation(id) {
-            alert('End consultation called for ' + id);
             if (confirm('¿Finalizar consulta? Esto cerrará la sesión.')) {
                 fetch(`/end_consultation/${id}`, { method: 'POST' })
                     .then(response => response.json())
                     .then(data => {
-                        alert('Response: ' + JSON.stringify(data));
                         if (data.success) {
                             alert('Consulta finalizada exitosamente');
                             location.reload();
@@ -251,7 +254,7 @@
                         }
                     }).catch(e => {
                         console.error(e);
-                        alert('Error de conexión: ' + e.message);
+                        alert('Error de conexión');
                     });
             }
         }       });
