@@ -118,6 +118,7 @@
         <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
     </div>
     <div class="header">
+        <button class="hamburger" onclick="toggleMenu()">☰</button>
         <h1>Medic-App - Gestión de Consultas</h1>
     </div>
     <div class="shift-control">
@@ -162,6 +163,7 @@
                         <button onclick="moveDown({{ request.id }})" style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 10px;">↓</button>
                         {% if request.status in ['accepted', 'in_room'] %}
                         <button onclick="startDoctorVideo({{ request.patient_id }})" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">📞 Iniciar Videollamada</button>
+                        <button onclick="endConsultation({{ request.id }})" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">🏁 Finalizar Consulta</button>
                         {% endif %}
                     </div>
                 </div>
@@ -234,7 +236,20 @@
                     if (data.success) {
                         location.reload();
                     }
-                });
+         
+        function endConsultation(id) {
+            if (confirm('¿Finalizar consulta? Esto cerrará la sesión.')) {
+                fetch(`/end_consultation/${id}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error al finalizar consulta');
+                        }
+                    });
+            }
+        }       });
         }
         let lastUnread = 0;
         function playNotificationSound() {
@@ -261,55 +276,23 @@
                         if (data.unread > lastUnread) {
                             playNotificationSound();
                         }
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                    lastUnread = data.unread;
-                }).catch(e => console.log('Unread polling error', e));
-        }
-        setInterval(updateUnreadBadge, 3000);
-
-        async function handleDoctorShift(event) {
-            event.stopPropagation();
-            alert('Toggle clicked, current: ' + toggle.checked); // DEBUG
-            const toggle = document.getElementById('doctor-shift-toggle');
-            const currentChecked = toggle.checked;
-            let endTime = null;
-            let newChecked;
-
-            if (!currentChecked) {
-                alert('OFF → prender: prompt'); // DEBUG
-                // OFF → prender: prompt hora
-                const now = new Date();
-                const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-                const defaultStr = defaultEnd.toISOString().slice(0, 16);
-                endTime = prompt('Ingresa hora de fin de guardia (YYYY-MM-DDTHH:MM):', defaultStr);
-                if (!endTime) {
-                    return;
-                }
-                newChecked = true;
-            } else {
-                alert('ON → apagar: confirm'); // DEBUG
-                // ON → apagar: confirm
-                if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
-                    return;
-                }
-                newChecked = false;
+        function handleTurnOn() {
+            const now = new Date();
+            const defaultEnd = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+            const defaultStr = defaultEnd.toISOString().slice(0, 16);
+            const endTime = prompt('Ingresa hora de fin de guardia (YYYY-MM-DDTHH:MM):', defaultStr);
+            if (!endTime) {
+                return false; // Cancel submit
             }
+            document.getElementById('end-time-input').value = endTime;
+            return true; // Submit
+        }
 
-            alert('POST: on=' + newChecked + ', end_time=' + endTime); // DEBUG
-            const body = {on: newChecked, end_time: endTime};
-            try {
-                const res = await fetch('/toggle_shift', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(body)
-                });
-                const data = await res.json();
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
+        function handleTurnOff() {
+            if (!confirm('¿Seguro apagar guardia? Perderás consultas activas.')) {
+                return false; // Cancel submit
+            }
+            return true; // Submit   }
                 toggle.checked = newChecked;
                 updateShiftDisplay();
                 alert('Success: toggle set to ' + newChecked); // DEBUG

@@ -276,7 +276,7 @@ def toggle_shift():
     db.session.commit()
     end_str = current_user.shift_end_time.strftime('%H:%M') if current_user.shift_end_time else None
     print(f"Toggle success: on_shift={on}, end_time={end_str}")  # DEBUG
-    flash(f'Guardia {"prendida" if on else "apagada"}')
+    flash(f'¡Guardia {"activada exitosamente" if on else "desactivada exitosamente"}!')
     return redirect(url_for('waiting_requests'))
 
 @app.route('/api/doctor/shift_status')
