@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mensajes - MedicApp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://meet.jit.si/external_api.js"></script>
     <style>
         .badge {
             background-color: #f44336;
@@ -96,7 +97,7 @@
                                     .then(r => r.json())
                                     .then(msgData => {
                                         if (msgData.message && msgData.message.content.includes('Videollamada')) {
-                                            showVideoCallModal(msgData.message.sender);
+                                            showVideoCallModal(msgData.message.sender, msgData.message.sender_id);
                                         }
                                     }).catch(e => console.log('Latest message error', e));
                             }
@@ -119,17 +120,96 @@
             <button onclick="closeVideoCallModal()" style="background-color: #f44336; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Ignorar</button>
         </div>
     </div>
+    <div id="videoContainer" style="display:none; position:fixed; bottom:10px; right:10px; width:400px; height:300px; border:2px solid #ccc; background:white; z-index:1000; border-radius:8px; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+        <div style="background:#f0f0f0; padding:5px; border-bottom:1px solid #ccc; display:flex; justify-content:space-between; align-items:center;">
+            <span>Videollamada</span>
+            <button onclick="closeVideo()" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+        <div id="jitsiContainer" style="height:calc(100% - 40px); width:100%;"></div>
+    </div>
     <script>
-        function showVideoCallModal(caller) {
+        let callerId = null;
+        function showVideoCallModal(caller, senderId) {
             document.getElementById('callerName').textContent = caller;
+            callerId = senderId;
             document.getElementById('videoCallModal').style.display = 'block';
         }
         function closeVideoCallModal() {
             document.getElementById('videoCallModal').style.display = 'none';
         }
         function joinCall() {
-            window.location.href = '/messages';
+            if (callerId) {
+                fetch(`/api/room_name/${callerId}`, {method: 'GET'})
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.room) {
+                            initJitsi(data.room);
+                        }
+                    }).catch(e => console.log(e));
+            }
             closeVideoCallModal();
+        }
+        let jitsiApi = null;
+        const currentUserId = {{ current_user.id }};
+        function initJitsi(room) {
+            const domain = 'meet.jit.si';
+            const options = {
+                roomName: room,
+                width: '100%',
+                height: '100%',
+                parentNode: document.querySelector('#jitsiContainer'),
+                userInfo: {
+                    displayName: '{{ current_user.name or current_user.username }}'
+                },
+                configOverwrite: {
+                    disableDeepLinking: true,
+                    prejoinPageEnabled: false,
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    enableWelcomePage: false,
+                    enableClosePage: false,
+                    disableInviteFunctions: true
+                },
+                interfaceConfigOverwrite: {
+                    DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false,
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'desktop', 'fullscreen',
+                        'fodeviceselection', 'hangup', 'profile', 'chat',
+                        'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                        'videoquality', 'filmstrip', 'feedback', 'stats',
+                        'shortcuts', 'tileview', 'videobackgroundblur',
+                        'download', 'help', 'mute-everyone'
+                    ]
+                }
+            };
+            jitsiApi = new JitsiMeetExternalAPI(domain, options);
+            jitsiApi.addEventListener('videoConferenceJoined', () => {
+                console.log('Videollamada iniciada');
+                fetch('/api/call_started', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room: room, user_id: currentUserId})
+                });
+            });
+            jitsiApi.addEventListener('videoConferenceLeft', () => {
+                console.log('Videollamada terminada');
+                fetch('/api/call_ended', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({room: room, user_id: currentUserId})
+                });
+                closeVideo();
+            });
+            document.getElementById('videoContainer').style.display = 'block';
+        }
+        function closeVideo() {
+            if (jitsiApi) {
+                jitsiApi.dispose();
+                jitsiApi = null;
+            }
+            document.getElementById('videoContainer').style.display = 'none';
         }
     </script>
 </body>
