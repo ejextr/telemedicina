@@ -468,15 +468,18 @@ def chat(user_id):
     waiting_id = waiting.id if waiting else None
     return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call, waiting_id=waiting_id)
 
-@app.route('/send_message/<int:user_id>', methods=['POST'])
+@app.route('/send_message', methods=['POST'])
 @login_required
-def send_message(user_id):
-    content = request.form.get('content')
-    if content:
-        message = Message(sender_id=current_user.id, receiver_id=user_id, content=content)
+def send_message():
+    data = request.get_json()
+    to_user_id = data.get('to_user_id')
+    content = data.get('content')
+    if to_user_id and content:
+        message = Message(sender_id=current_user.id, receiver_id=to_user_id, content=content)
         db.session.add(message)
         db.session.commit()
-    return redirect(url_for('chat', user_id=user_id))
+        return jsonify({'success': True})
+    return jsonify({'error': 'Invalid data'}), 400
 
 @app.route('/start_video_call/<int:user_id>', methods=['POST'])
 @login_required

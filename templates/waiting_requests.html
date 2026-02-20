@@ -391,7 +391,7 @@
                     let buttons = `<button onclick="startDoctorVideo(${r.patient_id})">Videollamada</button>
                                 <button class="reject-button" onclick="endConsultation(${r.id})">Finalizar</button>`;
                     if (r.chat_enabled) {
-                        buttons += `<a href="/chat/${r.patient_id}" target="_blank" style="margin-left: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Enviar Mensaje</button></a>`;
+                        buttons += `<a href="/chat/${r.patient_id}" style="margin-left: 10px;"><button style="background-color: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Enviar Mensaje</button></a>`;
                     } else {
                         buttons += `<button onclick="enableChat(${r.id})" style="background-color: #9C27B0; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">💬 Habilitar Chat</button>`;
                     }
