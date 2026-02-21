@@ -43,7 +43,7 @@
             <p><strong>Estado:</strong> {{ 'Completada' if w.status == 'completed' else 'Rechazada' }}</p>
             <p><strong>Fecha de finalización:</strong> {{ w.completed_at.strftime('%d/%m/%Y %H:%M') if w.completed_at else 'N/A' }}</p>
             {% if current_user.role == 'patient' and w.status == 'completed' and not w.feedback_submitted %}
-            <a href="{{ url_for('give_feedback', id=w.id) }}"><button style="background-color: #00bcd4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Dar Feedback</button></a>
+            <a href="{{ url_for('give_feedback_endpoint', id=w.id) }}"><button style="background-color: #00bcd4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Dar Feedback</button></a>
             {% endif %}
         </div>
         {% endfor %}
