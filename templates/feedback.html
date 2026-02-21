@@ -84,7 +84,7 @@
         <div class="feedback-form">
             <h2>Feedback para el Dr. {{ waiting.doctor.name or waiting.doctor.username }}</h2>
             <p>Consulta completada el {{ waiting.completed_at.strftime('%d/%m/%Y %H:%M') if waiting.completed_at else 'N/A' }}</p>
-            <form action="{{ url_for('submit_feedback', id=waiting.id) }}" method="POST">
+            <form action="{{ url_for('submit_feedback_endpoint', id=waiting.id) }}" method="POST">
                 <label>Calificación General (1-5 estrellas):</label>
                 <div class="rating">
                     <input type="radio" id="star5" name="rating" value="5" required><label for="star5">★</label>
