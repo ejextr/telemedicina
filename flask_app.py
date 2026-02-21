@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 import os
 import subprocess
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -88,6 +89,17 @@ class WaitingRoom(db.Model):
     chat_enabled = db.Column(db.Boolean, default=False)
     patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
+
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    waiting_room_id = db.Column(db.Integer, db.ForeignKey('waiting_room.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    positive_aspects = db.Column(db.Text)  # JSON string of list
+    negative_aspects = db.Column(db.Text)  # JSON string
+    other_positive = db.Column(db.Text)
+    other_negative = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    waiting_room = db.relationship('WaitingRoom', backref=db.backref('feedback', uselist=False))
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -319,7 +331,7 @@ def guardias():
         return redirect(url_for('dashboard'))
     doctors = []
     for doctor in User.query.filter_by(role='doctor', on_shift=True):
-        avg_rating = db.session.query(func.avg(Feedback.rating)).filter(Feedback.to_user_id == doctor.id).scalar() or 0
+        avg_rating = db.session.query(func.avg(Feedback.rating)).join(WaitingRoom, Feedback.waiting_room_id == WaitingRoom.id).filter(WaitingRoom.doctor_id == doctor.id).scalar() or 0
         doctor.avg_rating = round(avg_rating, 1) if avg_rating else 0
         doctors.append(doctor)
     # Check if patient is in any waiting room
@@ -868,6 +880,34 @@ def history():
     else:
         consultations = []
     return render_template('history.html', consultations=consultations)
+
+@app.route('/give_feedback/<int:id>')
+@login_required
+def give_feedback(id):
+    waiting = WaitingRoom.query.get_or_404(id)
+    if waiting.patient_id != current_user.id or waiting.status != 'completed' or waiting.feedback_submitted:
+        flash('No autorizado o feedback ya enviado.')
+        return redirect(url_for('history'))
+    return render_template('feedback.html', waiting=waiting)
+
+@app.route('/submit_feedback/<int:id>', methods=['POST'])
+@login_required
+def submit_feedback(id):
+    waiting = WaitingRoom.query.get_or_404(id)
+    if waiting.patient_id != current_user.id or waiting.status != 'completed' or waiting.feedback_submitted:
+        flash('No autorizado.')
+        return redirect(url_for('history'))
+    rating = request.form.get('rating')
+    positive = request.form.getlist('positive')
+    negative = request.form.getlist('negative')
+    other_pos = request.form.get('other_positive')
+    other_neg = request.form.get('other_negative')
+    feedback = Feedback(waiting_room_id=id, rating=int(rating), positive_aspects=json.dumps(positive), negative_aspects=json.dumps(negative), other_positive=other_pos, other_negative=other_neg)
+    db.session.add(feedback)
+    waiting.feedback_submitted = True
+    db.session.commit()
+    flash('Feedback enviado exitosamente.')
+    return redirect(url_for('history'))
 
 @app.after_request
 def add_no_cache_headers(response):
