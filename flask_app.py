@@ -20,7 +20,11 @@ login_manager.login_view = 'login'
 
 # Create tables on app start
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        print("DEBUG: Database tables created successfully")
+    except Exception as e:
+        print(f"DEBUG: Error creating database tables: {e}")
 
 @app.before_request
 def auto_db_init():
@@ -28,18 +32,21 @@ def auto_db_init():
     try:
         db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
         db.session.commit()
-    except:
-        pass
+        print("DEBUG: Added feedback_submitted column")
+    except Exception as e:
+        print(f"DEBUG: feedback_submitted column already exists or error: {e}")
     try:
         db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
         db.session.commit()
-    except:
-        pass
+        print("DEBUG: Added shift_end_time column")
+    except Exception as e:
+        print(f"DEBUG: shift_end_time column already exists or error: {e}")
     try:
         db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN completed_at DATETIME'))
         db.session.commit()
-    except:
-        pass
+        print("DEBUG: Added completed_at column")
+    except Exception as e:
+        print(f"DEBUG: completed_at column already exists or error: {e}")
             if User.query.count() == 0:
                 from werkzeug.security import generate_password_hash
                 users = [
