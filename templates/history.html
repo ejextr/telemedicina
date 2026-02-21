@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Consultas - MedicApp</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+    <div class="menu" id="menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            {% if current_user.role == 'patient' %}
+            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            <li><a href="{{ url_for('history') }}">Historial</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Salas de Espera</a></li>
+            {% endif %}
+            {% if current_user.role == 'doctor' %}
+            <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            <li><a href="{{ url_for('history') }}">Historial</a></li>
+            {% endif %}
+            <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
+            <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>
+        </ul>
+        <a href="{{ url_for('logout') }}" class="logout"><button style="width:100%;">Cerrar Sesión</button></a>
+    </div>
+    <div class="header">
+        <h1>Historial de Consultas</h1>
+    </div>
+    <div style="margin: 20px; padding: 20px; background-color: #f0f8ff; border: 1px solid #00bcd4; border-radius: 8px;">
+        {% if consultations %}
+        {% for w in consultations %}
+        <div style="margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px;">
+            <h4>
+                {% if current_user.role == 'patient' %}
+                Consulta con Dr. {{ w.doctor.name }}
+                {% else %}
+                Consulta con {{ w.patient.name }}
+                {% endif %}
+            </h4>
+            <p><strong>Síntomas:</strong> {{ w.symptoms }}</p>
+            <p><strong>Estado:</strong> {{ 'Completada' if w.status == 'completed' else 'Rechazada' }}</p>
+            <p><strong>Fecha de finalización:</strong> {{ w.completed_at.strftime('%d/%m/%Y %H:%M') if w.completed_at else 'N/A' }}</p>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>No tienes consultas finalizadas en el historial.</p>
+        {% endif %}
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('menu').classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

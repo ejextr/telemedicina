@@ -65,11 +65,12 @@
         <ul>
             <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
             {% if current_user.role == 'patient' %}
-            <li><a href="#">Historial</a></li>
+            <li><a href="{{ url_for('history') }}">Historial</a></li>
             <li><a href="{{ url_for('dashboard') }}">Salas de Espera</a></li>
             {% endif %}
             {% if current_user.role == 'doctor' %}
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            <li><a href="{{ url_for('history') }}">Historial</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes</a></li>
             <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>

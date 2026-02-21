@@ -110,6 +110,7 @@
             {% endif %}
             {% if current_user.role == 'doctor' %}
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
+            <li><a href="{{ url_for('history') }}">Historial</a></li>
             {% endif %}
             <li><a href="{{ url_for('messages') }}">Mensajes<span id="unread-badge" class="badge" style="display:none;"></span></a></li>
             <li><a href="{{ url_for('profile') }}">Mi Perfil</a></li>

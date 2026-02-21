@@ -81,6 +81,7 @@ class WaitingRoom(db.Model):
     symptoms = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, accepted, rejected, in_room, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
     end_time = db.Column(db.DateTime, nullable=True)
     queue_order = db.Column(db.Integer, default=0)  # For ordering pending requests
     feedback_submitted = db.Column(db.Boolean, default=False)
@@ -422,7 +423,7 @@ def end_consultation(id):
     waiting = WaitingRoom.query.get(id)
     if waiting and waiting.doctor_id == current_user.id and waiting.status in ['accepted', 'in_room']:
         waiting.status = 'completed'
-        waiting.end_time = datetime.utcnow()
+        waiting.completed_at = datetime.utcnow()
         db.session.commit()
         # Send notification message to patient
         message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content=f"La consulta ha finalizado. Gracias por usar MedicApp.")
@@ -856,6 +857,17 @@ if __name__ == '__main__':
             db.session.commit()
         except:
             pass  # Column already exists
+
+@app.route('/history')
+@login_required
+def history():
+    if current_user.role == 'patient':
+        consultations = WaitingRoom.query.filter_by(patient_id=current_user.id).filter(WaitingRoom.status.in_(['completed', 'rejected'])).order_by(WaitingRoom.completed_at.desc()).all()
+    elif current_user.role == 'doctor':
+        consultations = WaitingRoom.query.filter_by(doctor_id=current_user.id).filter(WaitingRoom.status.in_(['completed', 'rejected'])).order_by(WaitingRoom.completed_at.desc()).all()
+    else:
+        consultations = []
+    return render_template('history.html', consultations=consultations)
 
 @app.after_request
 def add_no_cache_headers(response):
