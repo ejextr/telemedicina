@@ -28,6 +28,7 @@ with app.app_context():
 
 @app.before_request
 def auto_db_init():
+    db.create_all()
     # Add missing columns if needed
     try:
         db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
