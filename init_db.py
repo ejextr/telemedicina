@@ -5,7 +5,7 @@ import os
 
 with app.app_context():
     # Si la base de datos existe, eliminarla para recrear con el esquema actualizado
-    db_path = 'medicapp.db'
+    db_path = '/home/ejextr/telemedicina/medicapp.db'
     if os.path.exists(db_path):
         os.remove(db_path)
         print("Removed old database")

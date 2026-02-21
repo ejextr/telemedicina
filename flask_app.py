@@ -10,7 +10,7 @@ import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medicapp.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/ejextr/telemedicina/medicapp.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
