@@ -436,9 +436,21 @@ def messages():
     if current_user.role == 'doctor':
         # Show list of patients with chat enabled
         waitings = WaitingRoom.query.filter_by(doctor_id=current_user.id, chat_enabled=True).all()
+        for w in waitings:
+            last_msg = Message.query.filter(
+                ((Message.sender_id == current_user.id) & (Message.receiver_id == w.patient_id)) |
+                ((Message.sender_id == w.patient_id) & (Message.receiver_id == current_user.id))
+            ).order_by(Message.timestamp.desc()).first()
+            w.last_message = last_msg.content if last_msg else "Toca para chatear"
     elif current_user.role == 'patient':
         # Show list of doctors with chat enabled
         waitings = WaitingRoom.query.filter_by(patient_id=current_user.id, chat_enabled=True).all()
+        for w in waitings:
+            last_msg = Message.query.filter(
+                ((Message.sender_id == current_user.id) & (Message.receiver_id == w.doctor_id)) |
+                ((Message.sender_id == w.doctor_id) & (Message.receiver_id == current_user.id))
+            ).order_by(Message.timestamp.desc()).first()
+            w.last_message = last_msg.content if last_msg else "Toca para chatear"
     else:
         waitings = []
     return render_template('messages.html', waitings=waitings)

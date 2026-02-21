@@ -163,7 +163,7 @@
                     <div class="avatar">{{ (waiting.patient.name[0] if current_user.role == 'doctor' else waiting.doctor.name[0]).upper() }}</div>
                     <div class="details">
                         <div class="name">{{ waiting.patient.name if current_user.role == 'doctor' else waiting.doctor.name }}</div>
-                        <div class="last-message">Toca para chatear</div>
+                        <div class="last-message">{{ waiting.last_message }}</div>
                     </div>
                 </div>
                 {% endfor %}
