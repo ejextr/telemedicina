@@ -101,7 +101,7 @@ class WaitingRoom(db.Model):
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
 class Feedback(db.Model):
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = 'consultation_feedback'
     id = db.Column(db.Integer, primary_key=True)
     waiting_room_id = db.Column(db.Integer, db.ForeignKey('waiting_room.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)  # 1-5
