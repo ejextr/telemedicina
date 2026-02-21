@@ -23,10 +23,10 @@
         }
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             padding: 20px;
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
         }
         .dashboard-button {
@@ -44,48 +44,13 @@
             background-color: #f0f0f0;
         }
 
-        .floating-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #00bcd4;
-            color: white;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            z-index: 1000;
-        }
-        .floating-menu {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: none;
-            z-index: 999;
-        }
-        .floating-menu button {
-            display: block;
-            width: 100%;
-            padding: 10px 20px;
-            border: none;
-            background: none;
-            text-align: left;
-            cursor: pointer;
-        }
-        .floating-menu button:hover {
-            background-color: #f0f0f0;
-        }
+
         @media (max-width: 768px) {
             .dashboard-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
                 gap: 15px;
                 padding: 15px;
+                max-width: none;
             }
             .dashboard-button {
                 padding: 15px;
@@ -100,7 +65,8 @@
         <ul>
             <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
             {% if current_user.role == 'patient' %}
-            <li><a href="{{ url_for('guardias') }}">Guardias</a></li>
+            <li><a href="#">Historial</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Salas de Espera</a></li>
             {% endif %}
             {% if current_user.role == 'doctor' %}
             <li><a href="{{ url_for('waiting_requests') }}">Solicitudes de Espera</a></li>
@@ -116,10 +82,9 @@
     <div class="dashboard-grid">
         <a href="{{ url_for('guardias') }}" class="dashboard-button">Guardias</a>
         <a href="{{ url_for('appointments') }}" class="dashboard-button">Turnos</a>
-        <a href="#" class="dashboard-button">Salas de Espera</a>
-        <a href="#" class="dashboard-button">Historial</a>
-        <a href="{{ url_for('messages') }}" class="dashboard-button">Mensajes</a>
-        <a href="{{ url_for('profile') }}" class="dashboard-button">Mi Perfil</a>
+    </div>
+    <div style="text-align: center; margin: 20px;">
+        <button style="background-color: #e53935; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 18px; cursor: pointer;">Emergencias</button>
     </div>
     <div style="margin: 20px; padding: 20px; background-color: #f0f8ff; border: 1px solid #00bcd4; border-radius: 8px;">
         <h3>Mis Salas de Espera</h3>
@@ -141,18 +106,10 @@
         <p>No tienes salas de espera activas.</p>
         {% endif %}
     </div>
-    <button class="floating-button" onclick="toggleFloatingMenu()">+</button>
-    <div class="floating-menu" id="floatingMenu">
-        <button onclick="alert('Chat con DocAI próximamente')">Chat con DocAI</button>
-        <button onclick="toggleFloatingMenu()">Cerrar Menú</button>
-    </div>
+
     <script>
         function toggleMenu() {
             document.getElementById('menu').classList.toggle('open');
-        }
-        function toggleFloatingMenu() {
-            const menu = document.getElementById('floatingMenu');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
         }
     </script>
 </body>
