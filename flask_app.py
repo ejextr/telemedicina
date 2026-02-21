@@ -433,16 +433,15 @@ def enable_chat(id):
 @app.route('/messages')
 @login_required
 def messages():
-    if current_user.role == 'patient':
-        # Find if patient has chat enabled with a doctor
-        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, chat_enabled=True).first()
-        if waiting:
-            return redirect(url_for('chat', user_id=waiting.doctor_id))
-    elif current_user.role == 'doctor':
+    if current_user.role == 'doctor':
         # Show list of patients with chat enabled
         waitings = WaitingRoom.query.filter_by(doctor_id=current_user.id, chat_enabled=True).all()
-        return render_template('messages.html', waitings=waitings)
-    return render_template('messages.html', waitings=[])
+    elif current_user.role == 'patient':
+        # Show list of doctors with chat enabled
+        waitings = WaitingRoom.query.filter_by(patient_id=current_user.id, chat_enabled=True).all()
+    else:
+        waitings = []
+    return render_template('messages.html', waitings=waitings)
 
 @app.route('/chat/<int:user_id>')
 @login_required
