@@ -857,7 +857,7 @@ def history():
         consultations = []
     return render_template('history.html', consultations=consultations)
 
-@app.route('/give_feedback/<int:id>')
+@app.route('/give_feedback/<int:id>', endpoint='give_feedback_endpoint')
 @login_required
 def give_feedback(id):
     waiting = WaitingRoom.query.get_or_404(id)
@@ -866,7 +866,7 @@ def give_feedback(id):
         return redirect(url_for('history'))
     return render_template('feedback.html', waiting=waiting)
 
-@app.route('/submit_feedback/<int:id>', methods=['POST'])
+@app.route('/submit_feedback/<int:id>', methods=['POST'], endpoint='submit_feedback_endpoint')
 @login_required
 def submit_feedback(id):
     waiting = WaitingRoom.query.get_or_404(id)
