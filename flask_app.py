@@ -18,25 +18,28 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-db_init_done = False
+# Create tables on app start
+with app.app_context():
+    db.create_all()
 
 @app.before_request
 def auto_db_init():
-    global db_init_done
-    if not db_init_done:
-        db_init_done = True
-        with app.app_context():
-            db.create_all()
-            try:
-                db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
-                db.session.commit()
-            except:
-                pass
-            try:
-                db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
-                db.session.commit()
-            except:
-                pass
+    # Add missing columns if needed
+    try:
+        db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN feedback_submitted BOOLEAN DEFAULT 0'))
+        db.session.commit()
+    except:
+        pass
+    try:
+        db.session.execute(db.text('ALTER TABLE user ADD COLUMN shift_end_time DATETIME'))
+        db.session.commit()
+    except:
+        pass
+    try:
+        db.session.execute(db.text('ALTER TABLE waiting_room ADD COLUMN completed_at DATETIME'))
+        db.session.commit()
+    except:
+        pass
             if User.query.count() == 0:
                 from werkzeug.security import generate_password_hash
                 users = [
