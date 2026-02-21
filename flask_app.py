@@ -402,6 +402,18 @@ def reject_waiting(id):
         db.session.commit()
     return redirect(url_for('waiting_requests'))
 
+@app.route('/cancel_waiting/<int:id>')
+@login_required
+def cancel_waiting(id):
+    waiting = WaitingRoom.query.get_or_404(id)
+    if waiting.patient_id != current_user.id:
+        flash('No autorizado para cancelar esta solicitud.')
+        return redirect(url_for('dashboard'))
+    db.session.delete(waiting)
+    db.session.commit()
+    flash('Solicitud cancelada exitosamente.')
+    return redirect(url_for('dashboard'))
+
 @app.route('/end_consultation/<int:id>', methods=['POST'])
 @login_required
 def end_consultation(id):

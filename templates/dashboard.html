@@ -92,11 +92,14 @@
         {% for w in current_user.patient_waiting_rooms %}
             {% set has_waiting = true %}
             <div style="margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px;">
-                <p><strong>Doctor:</strong> {{ w.doctor.username }} ({{ w.doctor.specialty }})</p>
+                <h4>Consulta con Dr. {{ w.doctor.name }}</h4>
                 <p><strong>Síntomas:</strong> {{ w.symptoms }}</p>
-                <p><strong>Estado:</strong> 
-                    {% if w.status == 'pending' %}Pendiente{% elif w.status == 'accepted' %}Aceptado{% elif w.status == 'rejected' %}Rechazado{% elif w.status == 'in_room' %}En Sala Virtual{% endif %}
+                <p><strong>Estado:</strong>
+                    {% if w.status == 'pending' %}Solicitud de sala de espera{% elif w.status == 'accepted' %}Aceptado{% elif w.status == 'rejected' %}Rechazado{% elif w.status == 'in_room' %}En sala virtual{% endif %}
                 </p>
+                {% if w.status in ['pending', 'accepted'] %}
+                <a href="{{ url_for('cancel_waiting', id=w.id) }}" onclick="return confirm('¿Estás seguro de que quieres cancelar esta solicitud?')"><button style="background-color: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancelar Solicitud</button></a>
+                {% endif %}
                 {% if w.status == 'in_room' %}
                 <a href="{{ url_for('chat', user_id=w.doctor_id) }}"><button style="background-color: #00bcd4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Ir al Chat</button></a>
                 {% endif %}
