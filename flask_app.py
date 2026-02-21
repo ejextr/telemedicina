@@ -100,7 +100,7 @@ class WaitingRoom(db.Model):
     patient = db.relationship('User', foreign_keys=[patient_id], backref=db.backref('patient_waiting_rooms', lazy=True))
     doctor = db.relationship('User', foreign_keys=[doctor_id], backref=db.backref('doctor_waiting_rooms', lazy=True))
 
-class Feedback(db.Model):
+class ConsultationFeedback(db.Model):
     __tablename__ = 'consultation_feedback'
     id = db.Column(db.Integer, primary_key=True)
     waiting_room_id = db.Column(db.Integer, db.ForeignKey('waiting_room.id'), nullable=False)
@@ -122,15 +122,7 @@ class Message(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy=True))
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_messages', lazy=True))
 
-class Feedback(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    from_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    to_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)  # 1-5
-    comment = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    from_user = db.relationship('User', foreign_keys=[from_user_id], backref=db.backref('given_feedbacks', lazy=True))
-    to_user = db.relationship('User', foreign_keys=[to_user_id], backref=db.backref('received_feedbacks', lazy=True))
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -342,7 +334,7 @@ def guardias():
         return redirect(url_for('dashboard'))
     doctors = []
     for doctor in User.query.filter_by(role='doctor', on_shift=True):
-        avg_rating = db.session.query(func.avg(Feedback.rating)).join(WaitingRoom, Feedback.waiting_room_id == WaitingRoom.id).filter(WaitingRoom.doctor_id == doctor.id).scalar() or 0
+        avg_rating = db.session.query(func.avg(ConsultationFeedback.rating)).join(WaitingRoom, ConsultationFeedback.waiting_room_id == WaitingRoom.id).filter(WaitingRoom.doctor_id == doctor.id).scalar() or 0
         doctor.avg_rating = round(avg_rating, 1) if avg_rating else 0
         doctors.append(doctor)
     # Check if patient is in any waiting room
@@ -565,36 +557,9 @@ def complete_call(waiting_id):
         return redirect(url_for('feedback_form', waiting_id=waiting_id))
     return '', 204
 
-@app.route('/feedback/<int:waiting_id>')
-@login_required
-def feedback_form(waiting_id):
-    waiting = WaitingRoom.query.get(waiting_id)
-    if not waiting or waiting.patient_id != current_user.id or waiting.status != 'completed':
-        flash('No tienes permiso para acceder a esta página')
-        return redirect(url_for('dashboard'))
-    if waiting.feedback_submitted:
-        flash('Ya has enviado feedback para esta consulta')
-        return redirect(url_for('dashboard'))
-    return render_template('feedback.html', waiting=waiting)
 
-@app.route('/submit_feedback/<int:waiting_id>', methods=['POST'])
-@login_required
-def submit_feedback(waiting_id):
-    waiting = WaitingRoom.query.get(waiting_id)
-    if not waiting or waiting.patient_id != current_user.id or waiting.status != 'completed' or waiting.feedback_submitted:
-        flash('No puedes enviar feedback')
-        return redirect(url_for('dashboard'))
-    rating = request.form.get('rating', type=int)
-    comment = request.form.get('comment')
-    if rating and 1 <= rating <= 5:
-        feedback = Feedback(from_user_id=current_user.id, to_user_id=waiting.doctor_id, rating=rating, comment=comment)
-        db.session.add(feedback)
-        waiting.feedback_submitted = True
-        db.session.commit()
-        flash('Feedback enviado correctamente')
-    else:
-        flash('Rating inválido')
-    return redirect(url_for('dashboard'))
+
+
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -913,7 +878,7 @@ def submit_feedback(id):
     negative = request.form.getlist('negative')
     other_pos = request.form.get('other_positive')
     other_neg = request.form.get('other_negative')
-    feedback = Feedback(waiting_room_id=id, rating=int(rating), positive_aspects=json.dumps(positive), negative_aspects=json.dumps(negative), other_positive=other_pos, other_negative=other_neg)
+    feedback = ConsultationFeedback(waiting_room_id=id, rating=int(rating), positive_aspects=json.dumps(positive), negative_aspects=json.dumps(negative), other_positive=other_pos, other_negative=other_neg)
     db.session.add(feedback)
     waiting.feedback_submitted = True
     db.session.commit()
