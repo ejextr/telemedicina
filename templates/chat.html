@@ -92,8 +92,8 @@
             {% endfor %}
         </div>
         <form class="message-form" action="{{ url_for('send_message', user_id=other_user.id) }}" method="POST">
-            <input type="text" name="content" placeholder="Escribe un mensaje..." required>
-            <button type="submit">Enviar</button>
+            <input type="text" name="content" placeholder="Escribe un mensaje..." required {% if not chat_enabled %}disabled{% endif %}>
+            <button type="submit" {% if not chat_enabled %}disabled{% endif %}>Enviar</button>
         </form>
         {% if current_user.role == 'doctor' %}
         <form action="{{ url_for('start_video_call', user_id=other_user.id) }}" method="POST" style="margin-top: 10px;">

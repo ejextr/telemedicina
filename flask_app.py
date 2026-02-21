@@ -379,7 +379,7 @@ def accept_waiting(id):
             waiting.status = 'accepted'
             db.session.commit()
             # Send notification message to patient
-            message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content=f"Tu solicitud ha sido aceptada por el doctor {current_user.name or current_user.username}.")
+            message = Message(sender_id=current_user.id, receiver_id=waiting.patient_id, content=f"Ha sido aceptado en la sala de espera del Dr. {current_user.name or current_user.username}.")
             db.session.add(message)
             db.session.commit()
         except Exception as e:
@@ -443,8 +443,8 @@ def messages():
             ).order_by(Message.timestamp.desc()).first()
             w.last_message = last_msg.content if last_msg else "Toca para chatear"
     elif current_user.role == 'patient':
-        # Show list of doctors with chat enabled
-        waitings = WaitingRoom.query.filter_by(patient_id=current_user.id, chat_enabled=True).all()
+        # Show list of doctors with accepted/in_room status (even if chat not enabled)
+        waitings = WaitingRoom.query.filter_by(patient_id=current_user.id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).all()
         for w in waitings:
             last_msg = Message.query.filter(
                 ((Message.sender_id == current_user.id) & (Message.receiver_id == w.doctor_id)) |
@@ -461,9 +461,9 @@ def chat(user_id):
     other_user = User.query.get(user_id)
     if not other_user:
         return redirect(url_for('messages'))
-    # Check if allowed to chat
+    # Check if allowed to view chat
     if current_user.role == 'patient':
-        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, doctor_id=user_id, chat_enabled=True).first()
+        waiting = WaitingRoom.query.filter_by(patient_id=current_user.id, doctor_id=user_id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).first()
         if not waiting:
             return redirect(url_for('messages'))
     elif current_user.role == 'doctor':
@@ -477,7 +477,8 @@ def chat(user_id):
     room_name = f"medicapp-{min(current_user.id, user_id)}-{max(current_user.id, user_id)}"
     recent_call = any(m.content.startswith("Videollamada") and (datetime.utcnow() - m.timestamp) < timedelta(hours=1) for m in messages)
     waiting_id = waiting.id if waiting else None
-    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call, waiting_id=waiting_id)
+    chat_enabled = waiting.chat_enabled if waiting else False
+    return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call, waiting_id=waiting_id, chat_enabled=chat_enabled)
 
 @app.route('/send_message/<int:user_id>', methods=['POST'])
 @login_required

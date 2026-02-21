@@ -159,7 +159,7 @@
             <h2>Conversaciones Activas</h2>
             {% if waitings %}
                 {% for waiting in waitings %}
-                <div class="conversation" onclick="openChat({{ waiting.patient_id if current_user.role == 'doctor' else waiting.doctor_id }}, '{{ waiting.patient.name if current_user.role == 'doctor' else waiting.doctor.name }}')">
+                <div class="conversation" onclick="openChat({{ waiting.patient_id if current_user.role == 'doctor' else waiting.doctor_id }}, '{{ waiting.patient.name if current_user.role == 'doctor' else waiting.doctor.name }}', {{ waiting.chat_enabled|lower }})">
                     <div class="avatar">{{ (waiting.patient.name[0] if current_user.role == 'doctor' else waiting.doctor.name[0]).upper() }}</div>
                     <div class="details">
                         <div class="name">{{ waiting.patient.name if current_user.role == 'doctor' else waiting.doctor.name }}</div>
@@ -348,7 +348,7 @@
         let currentChatUserId = null;
         let lastMessageId = 0;
 
-        function openChat(userId, name) {
+        function openChat(userId, name, chatEnabled) {
             currentChatUserId = userId;
             document.getElementById('chat-title').textContent = 'Chat con ' + name;
             document.getElementById('chat-view').style.display = 'flex';
@@ -356,6 +356,13 @@
             lastMessageId = 0;
             loadMessages();
             setInterval(loadMessages, 2000); // Poll for new messages
+            const input = document.getElementById('message-input');
+            const button = document.querySelector('#message-form button');
+            if (input && button) {
+                input.disabled = !chatEnabled;
+                button.disabled = !chatEnabled;
+                input.placeholder = chatEnabled ? 'Escribe un mensaje...' : 'Chat no habilitado aún';
+            }
         }
 
         function closeChat() {
@@ -393,6 +400,10 @@
             }
             if (!currentChatUserId) {
                 alert('Selecciona una conversación primero.');
+                return;
+            }
+            if (input.disabled) {
+                alert('El chat no está habilitado aún.');
                 return;
             }
             try {
