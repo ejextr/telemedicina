@@ -47,16 +47,16 @@ def auto_db_init():
         print("DEBUG: Added completed_at column")
     except Exception as e:
         print(f"DEBUG: completed_at column already exists or error: {e}")
-            if User.query.count() == 0:
-                from werkzeug.security import generate_password_hash
-                users = [
-                    User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', specialty='General', on_shift=False, shift_end_time=None),
-                    User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', specialty='Cardiología', on_shift=True, shift_end_time=None),
-                    User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', on_shift=False, shift_end_time=None)
-                ]
-                for u in users:
-                    db.session.add(u)
-                db.session.commit()
+    if User.query.count() == 0:
+        from werkzeug.security import generate_password_hash
+        users = [
+            User(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'), role='doctor', name='Admin Doctor', specialty='General', on_shift=False, shift_end_time=None),
+            User(username='doc', password=generate_password_hash('doc', method='pbkdf2:sha256'), role='doctor', name='Dr. Juan Pérez', specialty='Cardiología', on_shift=True, shift_end_time=None),
+            User(username='paciente', password=generate_password_hash('paciente', method='pbkdf2:sha256'), role='patient', name='María García', on_shift=False, shift_end_time=None)
+        ]
+        for u in users:
+            db.session.add(u)
+        db.session.commit()
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
