@@ -396,10 +396,10 @@
                 return;
             }
             try {
-                const res = await fetch('/send_message', {
+                const res = await fetch('/send_message/' + currentChatUserId, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({to_user_id: currentChatUserId, content: content})
+                    body: JSON.stringify({content: content})
                 });
                 if (res.ok) {
                     input.value = '';

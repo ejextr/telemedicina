@@ -468,18 +468,26 @@ def chat(user_id):
     waiting_id = waiting.id if waiting else None
     return render_template('chat.html', other_user=other_user, messages=messages, room_name=room_name, show_feedback=recent_call, waiting_id=waiting_id)
 
-@app.route('/send_message', methods=['POST'])
+@app.route('/send_message/<int:user_id>', methods=['POST'])
 @login_required
-def send_message():
-    data = request.get_json()
-    to_user_id = data.get('to_user_id')
-    content = data.get('content')
-    if to_user_id and content:
-        message = Message(sender_id=current_user.id, receiver_id=to_user_id, content=content)
+def send_message(user_id):
+    if request.is_json:
+        data = request.get_json()
+        content = data.get('content')
+    else:
+        content = request.form.get('content')
+    if content:
+        message = Message(sender_id=current_user.id, receiver_id=user_id, content=content)
         db.session.add(message)
         db.session.commit()
-        return jsonify({'success': True})
-    return jsonify({'error': 'Invalid data'}), 400
+        if request.is_json:
+            return jsonify({'success': True})
+        else:
+            return redirect(url_for('chat', user_id=user_id))
+    if request.is_json:
+        return jsonify({'error': 'Invalid data'}), 400
+    else:
+        return redirect(url_for('chat', user_id=user_id))
 
 @app.route('/start_video_call/<int:user_id>', methods=['POST'])
 @login_required
@@ -642,8 +650,8 @@ def api_waiting_requests():
     pending = WaitingRoom.query.filter_by(doctor_id=current_user.id, status='pending').order_by(WaitingRoom.queue_order).all()
     accepted = WaitingRoom.query.filter_by(doctor_id=current_user.id).filter(WaitingRoom.status.in_(['accepted', 'in_room'])).order_by(WaitingRoom.queue_order).all()
     return jsonify({
-        'pending': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'symptoms': w.symptoms, 'chat_enabled': w.chat_enabled} for w in pending],
-        'accepted': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'status': w.status, 'chat_enabled': w.chat_enabled} for w in accepted]
+        'pending': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'symptoms': w.symptoms, 'chat_enabled': w.chat_enabled, 'patient_id': w.patient_id} for w in pending],
+        'accepted': [{'id': w.id, 'patient_name': w.patient.name or w.patient.username, 'status': w.status, 'chat_enabled': w.chat_enabled, 'patient_id': w.patient_id} for w in accepted]
     })
 
 @app.route('/api/chat_messages/<int:user_id>')
